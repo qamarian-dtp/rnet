@@ -1,11 +1,14 @@
 package rnet
 
-type UserPanel struct {}
+type UserPanel struct {
+	net *Network
+}
 
-func (p *UserPanel) GetNI () (i *NetworkI) {
+func (p *UserPanel) GetNI (userID string, netAddr ... string) (i *Interface) {
 	return i
 }
 
-func (p *UserPanel) GetNAsOfUser () {}
+func (p *UserPanel) GetNA (userID string) ([]string) {
+}
 
-func (p *UserPanel) GetIDOfNAUser () {}
+func (p *UserPanel) GetID () {}
