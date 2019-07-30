@@ -5,7 +5,20 @@ import (
 )
 
 func New () (*Network) {
-	return
+	// id
+	net := Network {id, false, false, sync.Map {},
+
+		struct {
+			locked int8
+			addr map[string][]string
+		},
+
+		struct {
+			locked int8
+			addr map[string]bool
+		},
+	}
+	return net
 }
 
 type Network struct {
