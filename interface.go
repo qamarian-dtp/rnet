@@ -7,8 +7,9 @@ import (
 type Interface struct { // Some comment
 	underlyingNetwork *Network
 
-	interfaceID   string
-	networkAddr   string
+	interfaceID string
+	user string
+	networkAddr string
 	interfaceOpen bool
 
 	harvestBasket list.List
@@ -29,8 +30,6 @@ func (i *Interface) Send () {}
 func (i *Interface) Read () {}
 
 func (i *Interface) Check () {}
-
-func (i *Interface) DLink () {}
 
 func (i *Interface) Close () {}
 

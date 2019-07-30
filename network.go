@@ -4,15 +4,24 @@ import (
 	"sync"
 )
 
-func New () (n *Network) {
+func New () (*Network) {
 	return
 }
 
 type Network struct {
+	id string
 	freezed bool
+	locked bool
 
-	allocatedAddrs sync.Map // KEY: net-addr; VAL: delivery-store-rack, reclaimed signal
-	reservedAddrs d
+	allocations sync.Map // KEY: net-addr; VAL: user, net-interface, expirey-signal
+	userAddr struct {
+		locked int8
+		addr map[string][]string
+	}
+	reservedAddr struct {
+		locked int8
+		addr map[string]bool
+	}
 }
 
 func (n *Network) NewIntf () {}
@@ -27,9 +36,9 @@ func (n *Network) GetStoreP () {}
 
 func (n *Network) Reserve () {}
 
-func (n *Network) Release () {}
+func (n *Network) ScanReserver () {}
 
-func (n *Network) ReleaseAll () {}
+func (n *Network) Release () {}
 
 func (n *Network) Reclaim () {}
 

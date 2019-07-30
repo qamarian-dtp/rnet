@@ -10,6 +10,8 @@ type store struct {
 	racks list.List
 	wakeupSignal struct {
 		waiting bool
-		sigChan sync.Cond
+		signalChan sync.Cond
 	}
 }
+
+func (s *store) AddToRack () {}
