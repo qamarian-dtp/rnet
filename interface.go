@@ -5,36 +5,41 @@ import (
 )
 
 type Interface struct { // Some comment
+	underlyingNetwork *Network
+
 	interfaceID   string
 	networkAddr   string
-	addrReclaimed bool
 	interfaceOpen bool
 
 	harvestBasket list.List
-	deliveryStore struct {
-		id    string
-		racks list.List
-	}
+	deliveryStore *store
 
-	cache
+	spCache map[string]struct {
+		storeP *storeProtected
+		expired *bool
+	}
 }
 
 func (i *Interface) Open () {}
 
-func (i *Interface) Opened () (bool) {
-	return i.interfaceOpen
-}
+func (i *Interface) Opened () () {}
 
 func (i *Interface) Send () {}
 
 func (i *Interface) Read () {}
 
+func (i *Interface) Check () {}
+
 func (i *Interface) DLink () {}
 
 func (i *Interface) Close () {}
 
-func (i *Interface) Release () {}
+func (i *Interface) ReleaseAddr () {}
 
-// ------------
+func (i *Interface) NewIntf () {}
 
-func (i *Interface) addrReclaimed ()
+func (i *Interface) GetUser () {}
+
+func (i *Interface) GetAddr () {}
+
+func (i *Interface) Destroy () {}
