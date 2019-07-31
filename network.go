@@ -8,12 +8,24 @@ import (
 )
 
 func New () (*Network, error) {
-	_, errX := str.UniquePredsafeStr (32)
+	netID, errX := str.UniquePredsafeStr (32)
 	if errX != nil {
 		errMssg := fmt.Sprintf ("Unable to generate ID for network. [%s]", errX.Error ())
 		return nil, errors.New (errMssg)
 	}
-	net := Network {}
+	net := Network {id: netID}
+	net.locked = struct {
+		locker sync.RWMutex
+		locked bool
+	} {sync.RWMutex {}, false}
+	net.freezed = struct {
+		locker sync.RWMutex
+		freezed bool
+	} {sync.RWMutex {}, false}
+	net.allocations = struct {
+		locker sync.Mutex
+		alloc sync.Map
+	} {sync.Mutex {}, sync.Map {}}
 	return &net, nil
 }
 
@@ -34,12 +46,14 @@ type Network struct {
 }
 
 // ---------- Section A ---------- //
+/* Network owner and Interface methods */
 
 func (n *Network) NewIntf (userID, netAddr string) (*Interface, error) {
 	if n.locked.locked == true {
 		return nil, NetErrLocked
 	}
 	n.allocations.locker.Lock ()
+	defer n.allocations.locker.Unlock ()
 	_, ok := n.allocations.alloc.Load (netAddr)
 	if ok == true {
 		return nil, NetErrInUse
@@ -66,17 +80,11 @@ func (n *Network) GetUser (netAddr string) (string) {
 		return ""
 	}
 	allok, _ := alloc.(*Interface)
-	return allok.user
+	return allok.getUser ()
 }
 
-func (n *Network) Reclaim (netAddr string) {
-	alloc, ok := n.allocations.alloc.Load (netAddr)
-	if ok == false {
-		return
-	}
-	allok, _ := alloc.(*Interface)
-	allok.disconnect ()
-	n.allocations.alloc.Delete (netAddr)
+func (n *Network) ReclaimAddr (netAddr string) {
+	n.Reclaim (netAddr)
 }
 
 func (n *Network) Lock () (*Unlocker) {
@@ -134,3 +142,39 @@ func (u *Unfreezer) Unfreeze () {
 }
 
 // ---------- Section B ---------- //
+// Comm from interface
+
+func (n *Network) disconnect (netAddr string) {
+	alloc, ok := n.allocations.alloc.Load (netAddr)
+	if ok == false {
+		return
+	}
+	allok, _ := alloc.(*Interface)
+	allok.releaseAddr ()
+	n.allocations.alloc.Delete (netAddr)
+}
+
+func (n *Network) getSPOfInt (netAddr, myAddr string) (*storeProtected, error) {
+	alloc, ok := n.allocations.alloc.Load (netAddr)
+	if ok == false {
+		return nil, NetErrNotInUse
+	}
+	intf, _ := alloc.(*Interface)
+	sp, errX := intf.provideSP (myAddr)
+	if errX == IntErrNotConnected
+		return nil, NetErrNotInUse
+	}
+	if errX != nil {
+		errMssg := fmt.Sprintf ("Unable to get store protected. [%s]", errX.Error ())
+		return nil, errors.New (errMssg)
+	}
+	return sp, nil
+}
+
+var (
+	NetErrNotInUse error = errors.New ("Network address not in use.")
+)
+
+// ---------- Section C ---------- //
+// Comm to interface
+

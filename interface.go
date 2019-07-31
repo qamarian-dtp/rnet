@@ -10,7 +10,6 @@ import (
 
 type Interface struct {
 	id string
-	disconnected bool
 
 	underlyingNet *Network
 	user string
@@ -22,6 +21,10 @@ type Interface struct {
 
 	cache spCache
 }
+
+var (
+	IntErrNotConnected error = errors.New ("Interface has been disconnected.")
+)
 
 type store struct {
 	id string
@@ -49,6 +52,7 @@ type spCache struct {
 }
 
 // ---------- Section A ---------- //
+// Comm from network
 
 func (i *Interface) init (underlyingNet *Network, user, netAddr string) (error) {
 	var errX error
@@ -57,7 +61,6 @@ func (i *Interface) init (underlyingNet *Network, user, netAddr string) (error) 
 		errMssg := fmt.Sprintf ("Unable to generate ID for interface. [%s]", errX.Error ())
  		return errors.New (errMssg)
 	}
-	i.disconnected = false
 
 	i.underlyingNet = underlyingNet
 	i.user = user
@@ -75,13 +78,35 @@ func (i *Interface) init (underlyingNet *Network, user, netAddr string) (error) 
 	return nil
 }
 
-func (i *Interface) getStoreP () {}
+func (i *Interface) getUser () (string) {
+	return i.user
+}
 
-func (i *Interface) disconnect () {
-	i.disconnected = true
+func (i *Interface) provideSP (netAddr string) (*storeProtected, error) {
+	if i.netAddr == "" {
+		return nil, IntErrNotConnected
+	}
+	sp := &storeProtected {
+		underlyingStore: &(i.deliveryStore),
+		senderAddr: netAddr,
+		lastKnownStore: "",
+		rack: nil,
+	}
+	return sp, nil
+}
+
+func (i *Interface) releaseAddr () {
+	i.netAddr = ""
 }
 
 // ---------- Section B ---------- //
+// Comm to network
+
+func (i *Interface) getSPOfAnother () {
+	//
+}
+
+// ---------- Section C ---------- //
 
 func (i *Interface) Open () {}
 
@@ -95,12 +120,12 @@ func (i *Interface) Check () {}
 
 func (i *Interface) Close () {}
 
-func (i *Interface) ReleaseAddr () {}
-
 func (i *Interface) NewIntf () {}
 
 func (i *Interface) GetUser () {}
 
 func (i *Interface) GetAddr () {}
 
-func (i *Interface) Destroy () {}
+func (i *Interface) Disconnect () {
+	i.underlyingNet.disconnect (i.netAddr)
+}
