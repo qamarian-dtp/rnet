@@ -127,5 +127,5 @@ func (i *Interface) GetUser () {}
 func (i *Interface) GetAddr () {}
 
 func (i *Interface) Disconnect () {
-	i.underlyingNet.disconnect (i.netAddr)
+	i.underlyingNet.disconnectMe (i.netAddr)
 }

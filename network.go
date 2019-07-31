@@ -83,8 +83,8 @@ func (n *Network) GetUser (netAddr string) (string) {
 	return allok.getUser ()
 }
 
-func (n *Network) ReclaimAddr (netAddr string) {
-	n.Reclaim (netAddr)
+func (n *Network) Disconnect (netAddr string) {
+	n.disconnect (netAddr)
 }
 
 func (n *Network) Lock () (*Unlocker) {
@@ -142,7 +142,7 @@ func (u *Unfreezer) Unfreeze () {
 }
 
 // ---------- Section B ---------- //
-// Comm from interface
+// Net-and-intf peculiar operation
 
 func (n *Network) disconnect (netAddr string) {
 	alloc, ok := n.allocations.alloc.Load (netAddr)
@@ -152,6 +152,13 @@ func (n *Network) disconnect (netAddr string) {
 	allok, _ := alloc.(*Interface)
 	allok.releaseAddr ()
 	n.allocations.alloc.Delete (netAddr)
+}
+
+// ---------- Section C ---------- //
+// Comm from interface
+
+func (n *Network) disconnectMe (netAddr string) {
+	n.disconnect (netAddr)
 }
 
 func (n *Network) getSPOfInt (netAddr, myAddr string) (*storeProtected, error) {
@@ -175,6 +182,6 @@ var (
 	NetErrNotInUse error = errors.New ("Network address not in use.")
 )
 
-// ---------- Section C ---------- //
+// ---------- Section D ---------- //
 // Comm to interface
 
