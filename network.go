@@ -2,12 +2,13 @@ package rnet
 
 import (
 	"errors"
+	"fmt"
 	"gopkg.in/qamarian-lib/str.v1"
 	"sync"
 )
 
 func New () (*Network, error) {
-	id, errX := str.UniquePredsafeStr (32)
+	_, errX := str.UniquePredsafeStr (32)
 	if errX != nil {
 		errMssg := fmt.Sprintf ("Unable to generate ID for network. [%s]", errX.Error ())
 		return nil, errors.New (errMssg)
@@ -18,7 +19,7 @@ func New () (*Network, error) {
 
 type Network struct {
 	id string
-	locked struct
+	locked struct {
 		locker sync.RWMutex
 		locked bool
 	}
@@ -26,55 +27,60 @@ type Network struct {
 		locker sync.RWMutex
 		freezed bool
 	}
-	allocations sync.Map // KEY: net-addr; VAL: user, net-interface, expirey-signal
-	userAddr struct {
-		locker sync.RWMutex
-		addr map[string][]string
-	}
-	reservedAddr struct {
+	allocations struct {
 		locker sync.Mutex
-		addr map[string]bool
+		alloc sync.Map // KEY: net-addr; VAL: *interface
 	}
 }
 
-func (n *Network) NewIntf (userID, netAddr) (*Interface, error) {
-	id, errX := str.UniquePredsafeStr (32)
+// ---------- Section A ---------- //
+
+func (n *Network) NewIntf (userID, netAddr string) (*Interface, error) {
+	if n.locked.locked == true {
+		return nil, NetErrLocked
+	}
+	n.allocations.locker.Lock ()
+	_, ok := n.allocations.alloc.Load (netAddr)
+	if ok == true {
+		return nil, NetErrInUse
+	}
+	i := &Interface {}
+	errX := i.init (n, userID, netAddr)
 	if errX != nil {
-		errMssg := fmt.Sprintf ("Unable to generate ID for interface. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("Unable to initialize created interface. [%s]",
+			errX.Error ())
 		return nil, errors.New (errMssg)
 	}
-	intf := Interface {
-		underlyingNetwork: n,
-		interfaceID: id
-		user: userID
+	return i, nil
 }
 
-func (n *Network) GetUser () {}
+var (
+	NetErrLocked error = errors.New ("Interface creation not allowed: network is currently " +
+		"locked.")
+	NetErrInUse error = errors.New ("Network address already in use.")
+)
 
-func (n *Network) GetAddr () {}
-
-func (n *Network) GetStoreP () {}
-
-// --------------
-
-func (n *Network) CheckUsage (netAddr string) (string) {}
-
-func (n *Network) Reserve () {}
-
-func (n *Network) ScanReserve () {}
-
-func (n *Network) Release (netAddr string) (error) {
-	n.reservedAddr.Lock ()
-	delete (n.reservedAddr.addr, netAddr)
-	n.reservedAddr.Unlock ()
+func (n *Network) GetUser (netAddr string) (string) {
+	alloc, ok := n.allocations.alloc.Load (netAddr)
+	if ok == false {
+		return ""
+	}
+	allok, _ := alloc.(*Interface)
+	return allok.user
 }
 
-func (n *Network) Reclaim () {}
-
-// -------- completed -------------
+func (n *Network) Reclaim (netAddr string) {
+	alloc, ok := n.allocations.alloc.Load (netAddr)
+	if ok == false {
+		return
+	}
+	allok, _ := alloc.(*Interface)
+	allok.disconnect ()
+	n.allocations.alloc.Delete (netAddr)
+}
 
 func (n *Network) Lock () (*Unlocker) {
-	n.locked.Lock ()
+	n.locked.locker.Lock ()
 	n.locked.locked = true
 	return &Unlocker {locker: sync.RWMutex {}, underlyingNet: n, used: false}
 }
@@ -101,7 +107,7 @@ func (u *Unlocker) Unlock () {
 }
 
 func (n *Network) Freeze () (*Unfreezer) {
-	n.freezed.Lock ()
+	n.freezed.locker.Lock ()
 	n.freezed.freezed = true
 	return &Unfreezer {locker: sync.RWMutex {}, underlyingNet: n, used: false}
 }
@@ -126,3 +132,5 @@ func (u *Unfreezer) Unfreeze () {
 	u.underlyingNet.freezed.locker.Unlock ()
 	u.used = true
 }
+
+// ---------- Section B ---------- //
