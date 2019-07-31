@@ -22,10 +22,6 @@ type Interface struct {
 	cache spCache
 }
 
-var (
-	IntErrNotConnected error = errors.New ("Interface has been disconnected.")
-)
-
 type store struct {
 	id string
 	racks list.List
@@ -39,7 +35,7 @@ func (s *store) AddToRack () {}
 
 type storeProtected struct {
 	underlyingStore *store
-	sendersAddr string
+	senderAddr string
 	lastKnownStore string
 	rack list.List
 }
@@ -52,7 +48,7 @@ type spCache struct {
 }
 
 // ---------- Section A ---------- //
-// Comm from network
+// Ambassadors
 
 func (i *Interface) init (underlyingNet *Network, user, netAddr string) (error) {
 	var errX error
@@ -90,27 +86,29 @@ func (i *Interface) provideSP (netAddr string) (*storeProtected, error) {
 		underlyingStore: &(i.deliveryStore),
 		senderAddr: netAddr,
 		lastKnownStore: "",
-		rack: nil,
+		rack: list.List {},
 	}
 	return sp, nil
 }
+
+var (
+	IntErrNotConnected error = errors.New ("Interface has been disconnected.")
+)
 
 func (i *Interface) releaseAddr () {
 	i.netAddr = ""
 }
 
 // ---------- Section B ---------- //
-// Comm to network
+// Originals
 
-func (i *Interface) getSPOfAnother () {
-	//
+func (i *Interface) Open () {
+	i.closed = true
 }
 
-// ---------- Section C ---------- //
-
-func (i *Interface) Open () {}
-
-func (i *Interface) Opened () () {}
+func (i *Interface) Opened () (bool) {
+	return i.closed
+}
 
 func (i *Interface) Send () {}
 
@@ -118,14 +116,6 @@ func (i *Interface) Read () {}
 
 func (i *Interface) Check () {}
 
-func (i *Interface) Close () {}
-
-func (i *Interface) NewIntf () {}
-
-func (i *Interface) GetUser () {}
-
-func (i *Interface) GetAddr () {}
-
-func (i *Interface) Disconnect () {
-	i.underlyingNet.disconnectMe (i.netAddr)
+func (i *Interface) Close () {
+	i.closed = false
 }

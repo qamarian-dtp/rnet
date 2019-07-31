@@ -13,32 +13,21 @@ func New () (*Network, error) {
 		errMssg := fmt.Sprintf ("Unable to generate ID for network. [%s]", errX.Error ())
 		return nil, errors.New (errMssg)
 	}
-	net := Network {id: netID}
-	net.locked = struct {
-		locker sync.RWMutex
-		locked bool
-	} {sync.RWMutex {}, false}
-	net.freezed = struct {
-		locker sync.RWMutex
-		freezed bool
-	} {sync.RWMutex {}, false}
+	net := Network {id: netID, locked: false, freezed: false}
 	net.allocations = struct {
 		locker sync.Mutex
 		alloc sync.Map
-	} {sync.Mutex {}, sync.Map {}}
+	}{
+		sync.Mutex {},
+		sync.Map {},
+	}
 	return &net, nil
 }
 
 type Network struct {
 	id string
-	locked struct {
-		locker sync.RWMutex
-		locked bool
-	}
-	freezed struct {
-		locker sync.RWMutex
-		freezed bool
-	}
+	locked bool
+	freezed bool
 	allocations struct {
 		locker sync.Mutex
 		alloc sync.Map // KEY: net-addr; VAL: *interface
@@ -46,14 +35,18 @@ type Network struct {
 }
 
 // ---------- Section A ---------- //
-/* Network owner and Interface methods */
+// Originals
 
 func (n *Network) NewIntf (userID, netAddr string) (*Interface, error) {
-	if n.locked.locked == true {
+	if userID == "" {
+		return nil, errors.New ("User ID can not be an empty string.")
+	}
+	if netAddr == "" {
+		return nil, errors.New ("Network address can not be an empty string.")
+	}
+	if n.locked == true {
 		return nil, NetErrLocked
 	}
-	n.allocations.locker.Lock ()
-	defer n.allocations.locker.Unlock ()
 	_, ok := n.allocations.alloc.Load (netAddr)
 	if ok == true {
 		return nil, NetErrInUse
@@ -84,67 +77,6 @@ func (n *Network) GetUser (netAddr string) (string) {
 }
 
 func (n *Network) Disconnect (netAddr string) {
-	n.disconnect (netAddr)
-}
-
-func (n *Network) Lock () (*Unlocker) {
-	n.locked.locker.Lock ()
-	n.locked.locked = true
-	return &Unlocker {locker: sync.RWMutex {}, underlyingNet: n, used: false}
-}
-
-func (n *Network) Locked () (bool) {
-	return n.locked.locked
-}
-
-type Unlocker struct {
-	locker sync.RWMutex
-	underlyingNet *Network
-	used bool
-}
-
-func (u *Unlocker) Unlock () {
-	u.locker.Lock ()
-	defer u.locker.Unlock ()
-	if u.used == true {
-		return
-	}
-	u.underlyingNet.locked.locked = false
-	u.underlyingNet.locked.locker.Unlock ()
-	u.used = true
-}
-
-func (n *Network) Freeze () (*Unfreezer) {
-	n.freezed.locker.Lock ()
-	n.freezed.freezed = true
-	return &Unfreezer {locker: sync.RWMutex {}, underlyingNet: n, used: false}
-}
-
-func (n *Network) Freezed () (bool) {
-	return n.freezed.freezed
-}
-
-type Unfreezer struct {
-	locker sync.RWMutex
-	underlyingNet *Network
-	used bool
-}
-
-func (u *Unfreezer) Unfreeze () {
-	u.locker.Lock ()
-	defer u.locker.Unlock ()
-	if u.used == true {
-		return
-	}
-	u.underlyingNet.freezed.freezed = false
-	u.underlyingNet.freezed.locker.Unlock ()
-	u.used = true
-}
-
-// ---------- Section B ---------- //
-// Net-and-intf peculiar operation
-
-func (n *Network) disconnect (netAddr string) {
 	alloc, ok := n.allocations.alloc.Load (netAddr)
 	if ok == false {
 		return
@@ -154,12 +86,32 @@ func (n *Network) disconnect (netAddr string) {
 	n.allocations.alloc.Delete (netAddr)
 }
 
-// ---------- Section C ---------- //
-// Comm from interface
-
-func (n *Network) disconnectMe (netAddr string) {
-	n.disconnect (netAddr)
+func (n *Network) Lock () {
+	n.locked = true
 }
+
+func (n *Network) Locked () (bool) {
+	return n.locked
+}
+
+func (n *Network) Unlock () {
+	n.locked = false
+}
+
+func (n *Network) Freeze () {
+	n.freezed = true
+}
+
+func (n *Network) Freezed () (bool) {
+	return n.freezed
+}
+
+func (n *Network) Unfreeze () {
+	n.freezed = false
+}
+
+// ---------- Section B ---------- //
+// Ambassadors
 
 func (n *Network) getSPOfInt (netAddr, myAddr string) (*storeProtected, error) {
 	alloc, ok := n.allocations.alloc.Load (netAddr)
@@ -168,7 +120,7 @@ func (n *Network) getSPOfInt (netAddr, myAddr string) (*storeProtected, error) {
 	}
 	intf, _ := alloc.(*Interface)
 	sp, errX := intf.provideSP (myAddr)
-	if errX == IntErrNotConnected
+	if errX == IntErrNotConnected {
 		return nil, NetErrNotInUse
 	}
 	if errX != nil {
@@ -181,7 +133,3 @@ func (n *Network) getSPOfInt (netAddr, myAddr string) (*storeProtected, error) {
 var (
 	NetErrNotInUse error = errors.New ("Network address not in use.")
 )
-
-// ---------- Section D ---------- //
-// Comm to interface
-
