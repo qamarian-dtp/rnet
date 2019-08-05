@@ -47,92 +47,6 @@ func (i *Interface) getStore () (*store) {
 	return i.deliveryStore
 }
 
-type store struct {
-	id string
-	racks struct {
-		state int32 // 0: not in use; 1: about to-be manipulated; 2: about to-be harvested
-		racks list.List
-	}
-	wakeupSignal struct {
-		waiting bool
-		signalChan sync.Cond
-	}
-}
-
-func (s *store) getID () (string) {
-	return s.id
-}
-
-func (s *store) lockRacks () {
-	for {
-		ok := atomic.CompareAndSwapInt32 (*s.racks.state, 0, 1)
-		if ok == true {
-			break
-		}
-	}
-}
-
-func (s *store) unlockRacks () {
-	s.racks.state = 0
-}
-
-func (s *store) addRack (senderRack *rack) (error) {
-	if s.racks.state == 2 {
-		return StrErrToBeHarvested
-	}
-	if s.racks.Len () == 0 {
-		s.racks.PushFront (senderRack)
-	} else {
-		s.racks.PushBack (senderRack)
-	}
-	s.racks.state = 0
-}
-
-var (
-	StrErrToBeHarvested error = errors.New ("The store is about to be harvested.")
-)
-
-type spCache struct {
-	locker sync.RWMutex
-	storeP map[string]*storeProtected
-}
-
-type storeProtected struct {
-	recipientInt *Interface
-	senderAddr string
-	lastKnownStore string
-	senderRack *list.List
-}
-
-func (s *storeProtected) addMessage (mssg interface {}) (error) {
-	if s.recipientInt.getNetAddr () == "" {
-		return StpErrNotConnected
-	} else if s.recipientInt.getClosedSig () == true {
-		return StpErrClosed
-	}
-	s.recipientInt.getStore ().lockRacks ()
-	defer s.recipientInt.getStore ().unlockRacks ()
-	if lastKnownStore != s.recipientInt.getStore ().getID () {
-		s.senderRack = &list.List {}
-		errX := s.recipientInt.getStore ().addRack (s.senderRack)
-		if errX != nil {
-			errMssg := fmt.Sprintf ("Message could not be added to the rack. [%s]",
-				errX.Error ())
-			return errors.New (errMssg)
-		}
-	}
-	if s.senderRack.Len () == 0 {
-		s.senderRack.PushFront (mssg)
-	} else {
-		s.senderRack.PushBack (mssg)
-	}
-}
-
-var (
-	StpErrNotConnected error = errors.New ("Recipient is not connected to the network.")
-	StpErrClosed error = errors.New ("Recipient is closed to new messages.")
-)
-
 // ---------- Section A ---------- //
 // Ambassadors
 
@@ -140,7 +54,8 @@ func (i *Interface) init (underlyingNet *Network, user, netAddr string) (error) 
 	var errX error
 	i.id, errX = str.UniquePredsafeStr (32)
 	if errX != nil {
-		errMssg := fmt.Sprintf ("Unable to generate ID for interface. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("Unable to generate ID for interface. [%s]",
+			errX.Error ())
  		return errors.New (errMssg)
 	}
 

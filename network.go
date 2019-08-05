@@ -10,7 +10,8 @@ import (
 func New () (*Network, error) {
 	netID, errX := str.UniquePredsafeStr (32)
 	if errX != nil {
-		errMssg := fmt.Sprintf ("Unable to generate ID for network. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("Unable to generate ID for network. [%s]",
+			errX.Error ())
 		return nil, errors.New (errMssg)
 	}
 	net := Network {id: netID, locked: false, freezed: false}
@@ -62,8 +63,8 @@ func (n *Network) NewIntf (userID, netAddr string) (*Interface, error) {
 }
 
 var (
-	NetErrLocked error = errors.New ("Interface creation not allowed: network is currently " +
-		"locked.")
+	NetErrLocked error = errors.New ("Interface creation not allowed: network " +
+		"currently locked.")
 	NetErrInUse error = errors.New ("Network address already in use.")
 )
 
@@ -124,7 +125,8 @@ func (n *Network) getSPOfInt (netAddr, myAddr string) (*storeProtected, error) {
 		return nil, NetErrNotInUse
 	}
 	if errX != nil {
-		errMssg := fmt.Sprintf ("Unable to get store protected. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("Unable to get store protected. [%s]",
+			errX.Error ())
 		return nil, errors.New (errMssg)
 	}
 	return sp, nil
