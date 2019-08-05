@@ -11,16 +11,13 @@ import (
 
 type Interface struct {
 	id string
-
 	underlyingNet *Network
 	user string
 	netAddr string
-
 	closed bool
 	harvestBasket list.List
 	deliveryStore *store
-
-	cache spCache
+	cache diCache
 }
 
 func (i *Interface) getID () (string) {
@@ -47,49 +44,33 @@ func (i *Interface) getStore () (*store) {
 	return i.deliveryStore
 }
 
-// ---------- Section A ---------- //
-// Ambassadors
-
-func (i *Interface) init (underlyingNet *Network, user, netAddr string) (error) {
+func newIntf (underlyingNet *Network, user, netAddr string) (*Interface, error) {
+	i := Interface {}
 	var errX error
 	i.id, errX = str.UniquePredsafeStr (32)
 	if errX != nil {
 		errMssg := fmt.Sprintf ("Unable to generate ID for interface. [%s]",
 			errX.Error ())
- 		return errors.New (errMssg)
+ 		return nil, errors.New (errMssg)
 	}
-
 	i.underlyingNet = underlyingNet
 	i.user = user
 	i.netAddr = netAddr
-
 	i.closed = false
 	i.harvestBasket = list.List {}
 	i.deliveryStore = store {}
-
-	i.cache = spCache {
+	i.cache = diCache {
 		locker: sync.RWMutex {},
-		storeP: make (map[string]*storeProtected),
+		info: make (map[string]*dInfo),
 	}
-
-	return nil
+	return &i, nil
 }
 
-func (i *Interface) getUser () (string) {
-	return i.user
-}
-
-func (i *Interface) provideSP (netAddr string) (*storeProtected, error) {
+func (i *Interface) getDInfo (netAddr string) (*dInfo, error) {
 	if i.netAddr == "" {
 		return nil, IntErrNotConnected
 	}
-	sp := &storeProtected {
-		underlyingInt: i,
-		senderAddr: netAddr,
-		lastKnownStore: "",
-		rack: list.List {},
-	}
-	return sp, nil
+	return newDInfo (i), nil
 }
 
 var (
@@ -108,10 +89,12 @@ func (i *Interface) Open () {
 }
 
 func (i *Interface) Opened () (bool) {
-	return i.closed
+	return !i.closed
 }
 
-func (i *Interface) Send () {}
+func (i *Interface) Send (mssg interface {}, recipient string) (error) {
+
+{}
 
 func (i *Interface) Read () {}
 
