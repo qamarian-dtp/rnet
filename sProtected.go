@@ -5,7 +5,9 @@ import (
 	"fmt"
 )
 
-func newSProtected () (*storeProtected) {
+func newSProtected (recipientIntf *Interface) (*storeProtected) {
+	rk := newRack (RckToBeHarvestedState)
+	return storeProtected {recipientIntf, &rk}
 }
 
 type storeProtected struct {
@@ -14,6 +16,16 @@ type storeProtected struct {
 }
 
 func (s *storeProtected) addMessage (mssg interface {}) (error) {
+	if s.senderRack.getState () == RckStateNew {
+		errM := s.recipientIntf.getStore ().addRack (s.senderRack)
+		if errM != nil {
+			errMssg := fmt.Sprintf ("Unable to add new rack to the " +
+				"store. [%s]", errM.Error ())
+			return errors.New (errMssg)
+		}
+		s.senderRack.activate ()
+	}
+
 	oldRack := s.senderRack
 
 	addBeginning:
@@ -25,7 +37,6 @@ func (s *storeProtected) addMessage (mssg interface {}) (error) {
 	}
 	errX := s.senderRack.addMssg (mssg)
 	if errX == RckErrToBeHarvested {
-		oldRack := s.senderRack
 		s.senderRack = newRack ()
 		errY := s.recipientIntf.getStore ().addRack (s.senderRack)
 		if errY != nil {
