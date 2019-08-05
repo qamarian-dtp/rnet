@@ -5,14 +5,17 @@ import (
 	"fmt"
 )
 
+func newSProtected () (*storeProtected) {
+}
+
 type storeProtected struct {
-	recipientInt *Interface
+	recipientIntf *Interface
 	senderRack *rack
 }
 
-func (s *storeProtected) new (
-
 func (s *storeProtected) addMessage (mssg interface {}) (error) {
+	oldRack := s.senderRack
+
 	addBeginning:
 
 	if s.recipientInt.getNetAddr () == "" {
@@ -20,12 +23,13 @@ func (s *storeProtected) addMessage (mssg interface {}) (error) {
 	} else if s.recipientInt.getClosedSig () == true {
 		return StpErrClosed
 	}
-	errX := s.senderRack.lock ()
-	defer s.senderRack.unlock ()
+	errX := s.senderRack.addMssg (mssg)
 	if errX == RckErrToBeHarvested {
-		s.senderRack = &rack {}
-		errY := s.recipientInt.getStore ().addRack (s.senderRack)
+		oldRack := s.senderRack
+		s.senderRack = newRack ()
+		errY := s.recipientIntf.getStore ().addRack (s.senderRack)
 		if errY != nil {
+			s.senderRack = oldRack
 			errMssg := fmt.Sprintf ("Unable to add new rack to the " +
 				"store. [%s]", errY.Error ())
 			return errors.New (errMssg)
@@ -35,11 +39,6 @@ func (s *storeProtected) addMessage (mssg interface {}) (error) {
 		errrMssg := fmt.Sprintf ("Unable to add new rack to the store. " +
 			"[%s]", errX.Error ())
 		return errors.New (errMssg)
-	}
-	if s.senderRack.Len () == 0 {
-		s.senderRack.PushFront (mssg)
-	} else {
-		s.senderRack.PushBack (mssg)
 	}
 }
 
