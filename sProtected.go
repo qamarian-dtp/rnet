@@ -1,7 +1,16 @@
+package main
+
+import (
+	"errors"
+	"fmt"
+)
+
 type storeProtected struct {
 	recipientInt *Interface
 	senderRack *rack
 }
+
+func (s *storeProtected) new (
 
 func (s *storeProtected) addMessage (mssg interface {}) (error) {
 	addBeginning:
