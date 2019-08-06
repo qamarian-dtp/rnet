@@ -86,20 +86,20 @@ func (s *store) harvest () (*list.List, error) {
 	if first == nil {
 		return harvested, nil
 	}
-	rack, okX := rack1.Value.(*list.List)
+	rack, okX := rack1.Value.(*rack))
 	if okX == false {
 		return nil, return errors.New ("The first rack could not be " +
 			"asserted as '*list.List'.")
 	}
-	harvested.PushFrontList (rack)
+	harvested.PushFrontList (rack.getActualRack ())
 	rackX := rack1
 	for rackX = rackX.Next (); rackX != nil {
-		rack, okY := rackX.Value.(*list.List)
+		rack, okY := rackX.Value.(*rack)
 		if okY == false {
 			return nil, errors.New ("Rack could not be asserted as " +
 				"'*list.List'.")
 		}
-		harvested.PushBackList (rack)
+		harvested.PushBackList (rack.getActualRack ())
 	}
 	return harvested, nil
 }

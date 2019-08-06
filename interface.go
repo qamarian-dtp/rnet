@@ -64,7 +64,7 @@ func (i *Interface) Read () (interface {}, error) {
 		harvest := i.deliveryStore
 		newStre, errX := newStore ()
 		if errX != nil {
-			errMssg = fmt.Sprintf ("Delivery store could not be " +
+			errMssg := fmt.Sprintf ("Delivery store could not be " +
 				"harvested. [%s]", errX.Error ())
 			return nil, errors.New (errMssg)
 		}

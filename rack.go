@@ -41,6 +41,10 @@ func (r *rack) getState () (int32) {
 	return r.state
 }
 
+func (r *rack) getActualRack () (*rack) {
+	return &r.rack
+}
+
 var (
 	RckStateNew           int32 = 0
 	RckStateNotInUse      int32 = 1
