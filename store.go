@@ -1,21 +1,10 @@
-package main
+package rnet
 
 import (
 	"container/list"
 	"errors"
+	"sync"
 )
-
-type store struct {
-	id string
-	state int32 /* 0: not in use; 1: about to-be manipulated; 2: about to-be
-		harvested */
-	racks list.List
-	waiting struct {
-		state bool
-		aignalLock *sync.Mutex
-		signalChan *sync.Cond
-	}
-}
 
 func newStore () (*store, error) {
 	waitingLock := &sync.Mutex {}
@@ -28,7 +17,7 @@ func newStore () (*store, error) {
 		waitingLock,
 		sync.NewCond (waitingLock),
 	}
-	id, errX := str.UniquePredsafeStr (32
+	id, errX := str.UniquePredsafeStr (32)
 	if errX != nil {
 		errMssg := fmt.Sprintf ("ID could not be generated for store. [%s]",
 			errX.Error ())
@@ -43,12 +32,24 @@ func newStore () (*store, error) {
 	return stre, nil
 }
 
+type store struct {
+	id string
+	state int32 /* 0: not in use; 1: about to-be manipulated; 2: about to-be
+		harvested */
+	racks list.List
+	waiting struct {
+		state bool
+		aignalLock *sync.Mutex
+		signalChan *sync.Cond
+	}
+}
+
 func (s *store) addRack (senderRack *rack) (error) {
 	ok := atomic.CompareAndSwapInt32 (&s.state, 0, 1)
 	if ok == false && s.state == 2 {
 		return StrErrToBeHarvested
 	} else if ok == false {
-		return errors.New ("This data type is buggy or in use by multiple "
+		return errors.New ("This data type is buggy or in use by multiple " +
 			"routines.")
 	}
 	if s.racks.Len () == 0 {

@@ -6,43 +6,7 @@ import (
 	"fmt"
 	"gopkg.in/qamarian-lib/str.v1"
 	"sync"
-	"sync/atmoic"
 )
-
-type Interface struct {
-	id string
-	underlyingNet *Network
-	user string
-	netAddr string
-	closed bool
-	harvestBasket list.List
-	deliveryStore *store
-	cache diCache
-}
-
-func (i *Interface) getID () (string) {
-	return i.id
-}
-
-func (i *Interface) getUNet () (*Network) {
-	return i.underlyingNet
-}
-
-func (i *Interface) getUser () (string) {
-	return i.user
-}
-
-func (i *Interface) getNetAddr () (string) {
-	return i.netAddr
-}
-
-func (i *Interface) getClosedSig () (bool) {
-	return i.closed
-}
-
-func (i *Interface) getStore () (*store) {
-	return i.deliveryStore
-}
 
 func newIntf (underlyingNet *Network, user, netAddr string) (*Interface, error) {
 	i := Interface {}
@@ -66,23 +30,16 @@ func newIntf (underlyingNet *Network, user, netAddr string) (*Interface, error) 
 	return &i, nil
 }
 
-func (i *Interface) getDInfo (netAddr string) (*dInfo, error) {
-	if i.netAddr == "" {
-		return nil, IntErrNotConnected
-	}
-	return newDInfo (i), nil
+type Interface struct {
+	id string
+	underlyingNet *Network
+	user string
+	netAddr string
+	closed bool
+	harvestBasket list.List
+	deliveryStore *store
+	cache diCache
 }
-
-var (
-	IntErrNotConnected error = errors.New ("Interface has been disconnected.")
-)
-
-func (i *Interface) releaseAddr () {
-	i.netAddr = ""
-}
-
-// ---------- Section B ---------- //
-// Originals
 
 func (i *Interface) Open () {
 	i.closed = true
@@ -94,7 +51,7 @@ func (i *Interface) Opened () (bool) {
 
 func (i *Interface) Send (mssg interface {}, recipient string) (error) {
 
-{}
+}
 
 func (i *Interface) Read () {}
 
@@ -102,4 +59,41 @@ func (i *Interface) Wait () {}
 
 func (i *Interface) Close () {
 	i.closed = false
+}
+
+func (i *Interface) Disconnect () {}
+
+func (i *Interface) releaseAddr () {
+	i.netAddr = ""
+}
+
+func (i *Interface) getDInfo () (*dInfo, error) {
+	if i.netAddr == "" {
+		return nil, IntErrNotConnected
+	}
+	return newDInfo (i), nil
+}
+
+var (
+	IntErrNotConnected error = errors.New ("Interface is not connected.")
+)
+
+func (i *Interface) getID () (string) {
+	return i.id
+}
+
+func (i *Interface) getUNet () (*Network) {
+	return i.underlyingNet
+}
+
+func (i *Interface) getUser () (string) {
+	return i.user
+}
+
+func (i *Interface) getNetAddr () (string) {
+	return i.netAddr
+}
+
+func (i *Interface) getStore () (*store) {
+	return i.deliveryStore
 }

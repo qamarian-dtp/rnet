@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-func New () (*Network, error) {
+func NewNet () (*Network, error) {
 	netID, errX := str.UniquePredsafeStr (32)
 	if errX != nil {
 		errMssg := fmt.Sprintf ("Unable to generate ID for network. [%s]",
@@ -35,10 +35,7 @@ type Network struct {
 	}
 }
 
-// ---------- Section A ---------- //
-// Originals
-
-func (n *Network) NewIntf (userID, netAddr string) (*Interface, error) {
+func (n *Network) NewIntf (userID, netAddr string) (*Interror) {
 	if userID == "" {
 		return nil, errors.New ("User ID can not be an empty string.")
 	}
@@ -52,10 +49,9 @@ func (n *Network) NewIntf (userID, netAddr string) (*Interface, error) {
 	if ok == true {
 		return nil, NetErrInUse
 	}
-	i := &Interface {}
-	errX := i.init (n, userID, netAddr)
+	i, errX := newIntf (n, userID, netAddr)
 	if errX != nil {
-		errMssg := fmt.Sprintf ("Unable to initialize created interface. [%s]",
+		errMssg := fmt.Sprintf ("Unable to create new interface. [%s]",
 			errX.Error ())
 		return nil, errors.New (errMssg)
 	}
@@ -67,15 +63,6 @@ var (
 		"currently locked.")
 	NetErrInUse error = errors.New ("Network address already in use.")
 )
-
-func (n *Network) GetUser (netAddr string) (string) {
-	alloc, ok := n.allocations.alloc.Load (netAddr)
-	if ok == false {
-		return ""
-	}
-	allok, _ := alloc.(*Interface)
-	return allok.getUser ()
-}
 
 func (n *Network) Disconnect (netAddr string) {
 	alloc, ok := n.allocations.alloc.Load (netAddr)
@@ -111,27 +98,25 @@ func (n *Network) Unfreeze () {
 	n.freezed = false
 }
 
-// ---------- Section B ---------- //
-// Ambassadors
-
-func (n *Network) getSPOfInt (netAddr, myAddr string) (*storeProtected, error) {
+func (n *Network) getDInfo (netAddr string) (*dInfo, error) {
 	alloc, ok := n.allocations.alloc.Load (netAddr)
 	if ok == false {
 		return nil, NetErrNotInUse
 	}
 	intf, _ := alloc.(*Interface)
-	sp, errX := intf.provideSP (myAddr)
+	di, errX := intf.getDInfo ()
 	if errX == IntErrNotConnected {
 		return nil, NetErrNotInUse
 	}
 	if errX != nil {
-		errMssg := fmt.Sprintf ("Unable to get store protected. [%s]",
+		errMssg := fmt.Sprintf ("Unable to provide message delivery info [%s]",
 			errX.Error ())
 		return nil, errors.New (errMssg)
 	}
-	return sp, nil
+	return di, nil
 }
 
 var (
 	NetErrNotInUse error = errors.New ("Network address not in use.")
 )
+
