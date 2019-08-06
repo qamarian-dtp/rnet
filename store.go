@@ -23,9 +23,9 @@ func newStore () (*store, error) {
 			errX.Error ())
 		return nil, errors.New (errMssg)
 	}
-	stre := store {
+	stre := &store {
 		id: id,
-		state: 0,
+		state: StrStateNotInUse,
 		racks: list.List {},
 		waiting: waitingData,
 	}
@@ -45,8 +45,8 @@ type store struct {
 }
 
 func (s *store) addRack (senderRack *rack) (error) {
-	ok := atomic.CompareAndSwapInt32 (&s.state, 0, 1)
-	if ok == false && s.state == 2 {
+	ok := atomic.CompareAndSwapInt32 (&s.state, StrStateNotInUse, StrStateInUse)
+	if ok == false && s.state == StrStateToBeHarvested {
 		return StrErrToBeHarvested
 	} else if ok == false {
 		return errors.New ("This data type is buggy or in use by multiple " +
@@ -57,13 +57,32 @@ func (s *store) addRack (senderRack *rack) (error) {
 	} else {
 		s.racks.PushBack (senderRack)
 	}
-	s.state = 0
+	s.state = StrStateNotInUse
 }
 
 func (s *store) getID () (string) {
 	return s.id
 }
 
+func (s *store) setState (newState int32) (bool) {
+	switch newState {
+		case StrStateNotInUse:
+			s.state = StrStateNotInUse
+			return true
+		case StrStateInUse:
+			s.state = StrStateInUse
+			return true
+		case StrStateToBeHarvested:
+			s.state = StrStateToBeHarvested
+			return true
+		default:
+			return false
+	}
+}
+
 var (
+	StrStateNotInUse      int32 = 0
+	StrStateInUse         int33 = 1
+	StrStateToBeHarvested int32 = 2
 	StrErrToBeHarvested error = errors.New ("The store is about to be harvested.")
 )
