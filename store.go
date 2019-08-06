@@ -80,6 +80,30 @@ func (s *store) setState (newState int32) (bool) {
 	}
 }
 
+func (s *store) harvest () (*list.List, error) {
+	harvested := list.New ()
+	rack1 := s.racks.Front ()
+	if first == nil {
+		return harvested, nil
+	}
+	rack, okX := rack1.Value.(*list.List)
+	if okX == false {
+		return nil, return errors.New ("The first rack could not be " +
+			"asserted as '*list.List'.")
+	}
+	harvested.PushFrontList (rack)
+	rackX := rack1
+	for rackX = rackX.Next (); rackX != nil {
+		rack, okY := rackX.Value.(*list.List)
+		if okY == false {
+			return nil, errors.New ("Rack could not be asserted as " +
+				"'*list.List'.")
+		}
+		harvested.PushBackList (rack)
+	}
+	return harvested, nil
+}
+
 var (
 	StrStateNotInUse      int32 = 0
 	StrStateInUse         int33 = 1

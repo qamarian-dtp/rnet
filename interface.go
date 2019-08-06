@@ -21,7 +21,7 @@ func newIntf (underlyingNet *Network, user, netAddr string) (*Interface, error) 
 	i.user = user
 	i.netAddr = netAddr
 	i.closed = false
-	i.harvestBasket = &list.List {}
+	i.harvest = &list.New ()
 	dStore, errY := newStore ()
 	if errY != nil {
 		errMssg := fmt.Sprintf ("Unable to create new store. [%s]",
@@ -39,7 +39,7 @@ type Interface struct {
 	user string
 	netAddr string
 	closed bool
-	harvestBasket *list.List
+	harvest *list.List
 	deliveryStore *store
 	cache *mdiCache
 }
@@ -56,10 +56,10 @@ func (i *Interface) Send (mssg interface {}, recipient string) (error) {
 
 }
 
-func (i *Interface) Read () (interface {}) {
+func (i *Interface) Read () (interface {}, error) {
 	readBeginning:
 
-	mssg := i.harvestBasket.Front ()
+	mssg := i.harvest.Front ()
 	if mssg == nil {
 		harvest := i.deliveryStore
 		newStre, errX := newStore ()
@@ -69,7 +69,22 @@ func (i *Interface) Read () (interface {}) {
 			return nil, errors.New (errMssg)
 		}
 		i.deliveryStore = newStre
-		harvest.setState (StrStateToBeHarvested)
+		okX := harvest.setState (StrStateToBeHarvested)
+		if okX == false {
+			errMssg := fmt.Sprintf ("Delivery store could not be " +
+				"harvested.")
+			return nil, errors.New (errMssg)
+		}
+		mssgs, errY := i.store.harvest ()
+		if errY != nil {
+			errMssg := fmt.Sprintf ("Delivery store could not be " +
+				"harvested. [%s]", errY.Error ())
+			return nil, errors.New (errMssg)
+		}
+		i.harvest = mssgs
+		goto readBeginning
+	}
+	return mssg.Value, nil
 }
 
 func (i *Interface) Wait () {}
