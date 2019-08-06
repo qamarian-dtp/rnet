@@ -7,16 +7,6 @@ import (
 )
 
 func newStore () (*store, error) {
-	waitingLock := &sync.Mutex {}
-	waitingData := struct {
-		state bool
-		signalLock *sync.Mutex
-		signalChan *sync.Cond
-	} {
-		false,
-		waitingLock,
-		sync.NewCond (waitingLock),
-	}
 	id, errX := str.UniquePredsafeStr (32)
 	if errX != nil {
 		errMssg := fmt.Sprintf ("ID could not be generated for store. [%s]",
@@ -26,8 +16,8 @@ func newStore () (*store, error) {
 	stre := &store {
 		id: id,
 		state: StrStateNotInUse,
-		racks: list.List {},
-		waiting: waitingData,
+		racks: list.New (),
+		newMssg: false,
 	}
 	return stre, nil
 }
@@ -36,12 +26,9 @@ type store struct {
 	id string
 	state int32 /* 0: not in use; 1: about to-be manipulated; 2: about to-be
 		harvested */
-	racks list.List
-	waiting struct {
-		state bool
-		aignalLock *sync.Mutex
-		signalChan *sync.Cond
-	}
+	racks *list.List
+	newMssg bool
+	
 }
 
 func (s *store) addRack (senderRack *rack) (error) {
@@ -86,6 +73,7 @@ func (s *store) harvest () (*list.List, error) {
 	if first == nil {
 		return harvested, nil
 	}
+	rack.blockNewMssgs ()
 	rack, okX := rack1.Value.(*rack))
 	if okX == false {
 		return nil, return errors.New ("The first rack could not be " +

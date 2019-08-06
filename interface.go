@@ -21,7 +21,6 @@ func newIntf (underlyingNet *Network, user, netAddr string) (*Interface, error) 
 	i.user = user
 	i.netAddr = netAddr
 	i.closed = false
-	i.harvest = &list.New ()
 	dStore, errY := newStore ()
 	if errY != nil {
 		errMssg := fmt.Sprintf ("Unable to create new store. [%s]",
@@ -29,6 +28,7 @@ func newIntf (underlyingNet *Network, user, netAddr string) (*Interface, error) 
 		return nil, errors.New (errMssg)
 	}
 	i.deliveryStore = dStore
+	i.harvest = &list.New ()
 	i.cache = newMDICache ()
 	return &i, nil
 }
@@ -39,9 +39,29 @@ type Interface struct {
 	user string
 	netAddr string
 	closed bool
-	harvest *list.List
 	deliveryStore *store
+	harvest *list.List
 	cache *mdiCache
+}
+
+func (i *Interface) getID () (string) {
+	return i.id
+}
+
+func (i *Interface) getUNet () (*Network) {
+	return i.underlyingNet
+}
+
+func (i *Interface) getUser () (string) {
+	return i.user
+}
+
+func (i *Interface) getNetAddr () (string) {
+	return i.netAddr
+}
+
+func (i *Interface) getStore () (*store) {
+	return i.deliveryStore
 }
 
 func (i *Interface) Open () {
@@ -75,19 +95,21 @@ func (i *Interface) Read () (interface {}, error) {
 				"harvested.")
 			return nil, errors.New (errMssg)
 		}
-		mssgs, errY := i.store.harvest ()
+		mssgs, errY := harvest.harvest ()
 		if errY != nil {
 			errMssg := fmt.Sprintf ("Delivery store could not be " +
 				"harvested. [%s]", errY.Error ())
 			return nil, errors.New (errMssg)
 		}
-		i.harvest = mssgs
-		goto readBeginning
+		if mssgs.Len () == 0 {
+			return nil, nil
+		} else {
+			i.harvest = mssgs
+			goto readBeginning
+		}
 	}
 	return mssg.Value, nil
 }
-
-func (i *Interface) Wait () {}
 
 func (i *Interface) Close () {
 	i.closed = false
@@ -109,23 +131,3 @@ func (i *Interface) getDInfo () (*dInfo, error) {
 var (
 	IntErrNotConnected error = errors.New ("Interface is not connected.")
 )
-
-func (i *Interface) getID () (string) {
-	return i.id
-}
-
-func (i *Interface) getUNet () (*Network) {
-	return i.underlyingNet
-}
-
-func (i *Interface) getUser () (string) {
-	return i.user
-}
-
-func (i *Interface) getNetAddr () (string) {
-	return i.netAddr
-}
-
-func (i *Interface) getStore () (*store) {
-	return i.deliveryStore
-}
