@@ -39,8 +39,9 @@ type Interface struct {
 	underlyingNet *Network
 	user string
 	netAddr string
-	closed bool
+	state bool
 	deliveryStore *store
+	stash []*store
 	harvest *list.List
 	cache *mdiCache
 }
@@ -61,53 +62,67 @@ func (i *Interface) getNetAddr () (string) {
 	return i.netAddr
 }
 
-func (i *Interface) getStore () (*store) {
-	return i.deliveryStore
+func (i *Interface) getState () (bool) {
+	return i.state
 }
 
 func (i *Interface) Open () {
-	i.closed = true
+	i.state = true
 }
 
-func (i *Interface) Opened () (bool) {
-	return !i.closed
+func (i *Interface) Close () {
+	i.state = false
 }
 
-func (i *Interface) Send (mssg interface {}, recipient string) (error) {
-
+func (i *Interface) getStore () (*store) {
+	return i.deliveryStore
 }
 
 func (i *Interface) Read () (interface {}, error) {
 	readBeginning:
 
 	mssg := i.harvest.Front ()
-	if mssg == nil {
-		harvest := i.deliveryStore
-		newStre, errX := newStore ()
-		if errX != nil {
-			errMssg := fmt.Sprintf ("Delivery store could not be " +
-				"harvested. [%s]", errX.Error ())
-			return nil, errors.New (errMssg)
+	if mssg == nil && (len (i.stash) == 0 || i.deliveryStore.checkNewMssg () == true) {
+		mssgsX ;= list.New ()
+		for stash := range i.stash {
+			stashMssgs, errY := stash.Harvest ()
+			if errY != nil {
+				errMssg := fmt.Sprintf ("Messages of a stashed store could not be " +
+					"harvested. [%s]", errY.Error ())
+				return nil, errors.New (errMssg)
+			}
+			mssgsX.PushBackList (stashMssgs)
 		}
-		i.deliveryStore = newStre
-		mssgs, errY := harvest.Harvest ()
-		if errY != nil {
-			errMssg := fmt.Sprintf ("Delivery store could not be " +
-				"harvested. [%s]", errY.Error ())
-			return nil, errors.New (errMssg)
-		}
-		if mssgs.Len () == 0 {
-			return nil, nil
-		} else {
-			i.harvest = mssgs
+		i.stash = []*store {}
+		if mssgsX.Len () > 0 {
+			i.harvest == mssgsX
 			goto readBeginning
 		}
+		newStre, errX := newStore ()
+		if errX != nil {
+			errMssg := fmt.Sprintf ("A new store, to replace current store, could not be created. [%s]", errX.Error ())
+			return nil, errors.New (errMssg)
+		}
+		oldStore = i.deliveryStore
+		i.deliveryStore = newStre
+		mssgsY, errY := oldStore.Harvest ()
+		if errY != nil {
+			i.stash = append (i.stash, oldStore)
+			errMssg := fmt.Sprintf ("Messages of the store could not be " +
+					"harvested. [%s]", errY.Error ())
+			return nil, errors.New (errMssg)
+		}
+		if mssgsY.Len () == 0 {
+			return nil, nil
+		}
+		i.harvest = mssgsY
+		goto readBeginning
 	}
 	return mssg.Value, nil
 }
 
-func (i *Interface) Close () {
-	i.closed = false
+func (i *Interface) Send (mssg interface {}, recipient string) (error) {
+
 }
 
 func (i *Interface) Disconnect () {}
@@ -116,7 +131,7 @@ func (i *Interface) releaseAddr () {
 	i.netAddr = ""
 }
 
-func (i *Interface) getDInfo () (*dInfo, error) {
+func (i *Interface) getMDInfo () (*mDInfo, error) {
 	if i.netAddr == "" {
 		return nil, IntErrNotConnected
 	}
