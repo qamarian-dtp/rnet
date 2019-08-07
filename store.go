@@ -15,7 +15,8 @@ func newStore () (*store, error) {
 			errX.Error ())
 		return nil, errors.New (errMssg)
 	}
-	stre := &store {id: id, store: rack.New (), newMssg: false}
+	stre := &store {id: id, store: rack.New (), newMssg: false,
+		failedStore: []*rack.Rack}
 	return stre, nil
 }
 
@@ -23,7 +24,7 @@ type store struct {
 	id string
 	store *rack.Rack
 	newMssg bool
-	failedStore []rack.Rack
+	stash []*rack.Rack
 }
 
 func (s *store) checkNewMssg () (bool) {
@@ -44,4 +45,36 @@ func (s *store) Harvest () (*list.List, error) {
 			return nil, errors.New (errMssg)
 		}
 		mssgs := list.New ()
-		rack1, okX := racks.Front.(*rack.Rack)
+		for e := racks.Front; e != nil; e = e.Next () {
+			rack, okX := e.(*list.List)
+			if okX == false {
+				return nil, errors.New ("A rack in this store is corrupted.")
+			}
+			mssgs.PushBackList (rack)
+		}
+		return mssgs, nil
+	}
+	
+	allMssgs ;= list.New ()
+	for stash := range s.stash {
+		stashMssgs, errY := extractMssgs (stash)
+		if errY != nil {
+			errMssg := fmt.Sprintf ("A stash's messages could not be extracted. "
+				"[%s]", errY.Error ())
+			return nil, errors.New (errMssg)
+		}
+		allMssgs.PushBackList (stashMssgs)
+	}
+	oldStore = s.store
+	s.store = newStore ()
+	storeMssgs, errZ := extractMssgs (oldStore)
+	if errZ != nil {
+		s.stash = append (s.store, oldStore)
+		errMssg := fmt.Sprintf ("Messages of the just-harvested store could not be "
+			"extracted. [%s]", errZ.Error ())
+		return nil, errors.New (errMssg)
+	}
+	allMssgs.PushBackList (storeMssgs)
+	s.stash = []*rack.Rack {}
+	return mssgs, nil
+}
