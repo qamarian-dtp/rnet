@@ -4,6 +4,7 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
+	"gopkg.in/qamarian-dtp/rack.v0"
 	"gopkg.in/qamarian-lib/str.v1"
 	"sync"
 )
@@ -89,13 +90,7 @@ func (i *Interface) Read () (interface {}, error) {
 			return nil, errors.New (errMssg)
 		}
 		i.deliveryStore = newStre
-		okX := harvest.setState (StrStateToBeHarvested)
-		if okX == false {
-			errMssg := fmt.Sprintf ("Delivery store could not be " +
-				"harvested.")
-			return nil, errors.New (errMssg)
-		}
-		mssgs, errY := harvest.harvest ()
+		mssgs, errY := harvest.Harvest ()
 		if errY != nil {
 			errMssg := fmt.Sprintf ("Delivery store could not be " +
 				"harvested. [%s]", errY.Error ())

@@ -48,7 +48,7 @@ func (r *rack) getState () (int32) {
 
 func (r *rack) harvest ()(*list.List, error) {
 	harvestBeginning:
-	
+
 	runtime.Gosched ()
 	switch r.state {
 		case RckStateNew:
