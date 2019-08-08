@@ -5,8 +5,12 @@ import (
 )
 
 func newMDICache () {
-	return &mdiCache {sync.Mutex {}, make (map[string]*dInfo
-type diCache struct {
-	locker sync.RWMutex
-	info map[string]*dInfo
+	return &mDICache {sync.Mutex {}, make (map[string]*mDInfo}
 }
+
+type mDICache struct {
+	locker sync.Mutex
+	info map[string]*mDInfo
+}
+
+func 

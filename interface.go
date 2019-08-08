@@ -21,7 +21,7 @@ func newIntf (underlyingNet *Network, user, netAddr string) (*Interface, error) 
 	i.underlyingNet = underlyingNet
 	i.user = user
 	i.netAddr = netAddr
-	i.closed = false
+	i.netState = IntStateIdle
 	dStore, errY := newStore ()
 	if errY != nil {
 		errMssg := fmt.Sprintf ("Unable to create new store. [%s]",
@@ -29,6 +29,7 @@ func newIntf (underlyingNet *Network, user, netAddr string) (*Interface, error) 
 		return nil, errors.New (errMssg)
 	}
 	i.deliveryStore = dStore
+	i.stash = []*store {}
 	i.harvest = &list.New ()
 	i.cache = newMDICache ()
 	return &i, nil
@@ -39,14 +40,14 @@ type Interface struct {
 	underlyingNet *Network
 	user string
 	netAddr string
-	state bool
+	netState int33
 	deliveryStore *store
 	stash []*store
 	harvest *list.List
 	cache *mdiCache
 }
 
-func (i *Interface) getID () (string) {
+func (i *Interface) IntfID () (string) {
 	return i.id
 }
 
@@ -54,28 +55,62 @@ func (i *Interface) getUNet () (*Network) {
 	return i.underlyingNet
 }
 
-func (i *Interface) getUser () (string) {
+func (i *Interface) User () (string) {
 	return i.user
 }
 
-func (i *Interface) getNetAddr () (string) {
+func (i *Interface) NetAddr () (string) {
 	return i.netAddr
 }
 
-func (i *Interface) getState () (bool) {
-	return i.state
-}
-
-func (i *Interface) Open () {
-	i.state = true
-}
-
-func (i *Interface) Close () {
-	i.state = false
+func (i *Interface) NetState () (int32) {
+	return i.netState
 }
 
 func (i *Interface) getStore () (*store) {
 	return i.deliveryStore
+}
+
+func (i *Interface) Send (mssg interface {}, recipient string) (error) {
+
+}
+
+func (i *Interface) _harvest_ (replaceStore bool) (error) {
+	if i.deliveryStore == nil {
+		return IntErrNoStoreAvail
+	}
+	mssgsX ;= list.New ()
+	for stash := range i.stash {
+		stashMssgs, errY := stash.Harvest ()
+		if errY != nil {
+			errMssg := fmt.Sprintf ("Messages of a stashed store could not be " +
+				"harvested. [%s]", errY.Error ())
+			return errors.New (errMssg)
+		}
+		mssgsX.PushBackList (stashMssgs)
+	}
+	oldStore := i.deliveryStore
+	if replaceStore == true {
+		newStre, errX := newStore ()
+		if errX != nil {
+			errMssg := fmt.Sprintf ("A new store, to replace current store, could not be created. [%s]", errX.Error ())
+			return errors.New (errMssg)
+		}
+		i.deliveryStore = newStre
+	} else {
+		i.deliveryStore = nil
+	}
+	mssgsY, errY := oldStore.Harvest ()
+	if errY != nil {
+		i.stash = append (i.stash, oldStore)
+		errMssg := fmt.Sprintf ("Messages of the current store could not be " +
+				"harvested. [%s]", errY.Error ())
+		return errors.New (errMssg)
+	}
+	i.harvest.PushBackList (mssgsX)
+	i.harvest.PushBackList (mssgsY)
+	i.stash = []*store {}
+	return nil
 }
 
 func (i *Interface) Read () (interface {}, error) {
@@ -83,61 +118,34 @@ func (i *Interface) Read () (interface {}, error) {
 
 	mssg := i.harvest.Front ()
 	if mssg == nil && (len (i.stash) == 0 || i.deliveryStore.checkNewMssg () == true) {
-		mssgsX ;= list.New ()
-		for stash := range i.stash {
-			stashMssgs, errY := stash.Harvest ()
-			if errY != nil {
-				errMssg := fmt.Sprintf ("Messages of a stashed store could not be " +
-					"harvested. [%s]", errY.Error ())
-				return nil, errors.New (errMssg)
-			}
-			mssgsX.PushBackList (stashMssgs)
-		}
-		i.stash = []*store {}
-		if mssgsX.Len () > 0 {
-			i.harvest == mssgsX
-			goto readBeginning
-		}
-		newStre, errX := newStore ()
-		if errX != nil {
-			errMssg := fmt.Sprintf ("A new store, to replace current store, could not be created. [%s]", errX.Error ())
-			return nil, errors.New (errMssg)
-		}
-		oldStore = i.deliveryStore
-		i.deliveryStore = newStre
-		mssgsY, errY := oldStore.Harvest ()
-		if errY != nil {
-			i.stash = append (i.stash, oldStore)
-			errMssg := fmt.Sprintf ("Messages of the store could not be " +
-					"harvested. [%s]", errY.Error ())
-			return nil, errors.New (errMssg)
-		}
-		if mssgsY.Len () == 0 {
-			return nil, nil
-		}
+		errM := i._harvest_ ()
+		if errM ==
+		
 		i.harvest = mssgsY
 		goto readBeginning
 	}
+	i.harvest.Delete (mssg)
 	return mssg.Value, nil
-}
-
-func (i *Interface) Send (mssg interface {}, recipient string) (error) {
-
 }
 
 func (i *Interface) Disconnect () {}
 
-func (i *Interface) releaseAddr () {
+func (i *Interface) destroy () {
 	i.netAddr = ""
 }
 
 func (i *Interface) getMDInfo () (*mDInfo, error) {
-	if i.netAddr == "" {
+	if i.netState == IntStateDestroyed {
 		return nil, IntErrNotConnected
 	}
-	return newDInfo (i), nil
+	return newMDInfo (i), nil
 }
 
 var (
+	IntStateIdle      int32 = 0
+	IntStateSendingTo int32 = 1
+	IntStateDestroyed int32 = 2
+	
+	IntErrNoStoreAvail error = errors.New ("This interface has no store."))
 	IntErrNotConnected error = errors.New ("Interface is not connected.")
 )
