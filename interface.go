@@ -177,15 +177,6 @@ func (i *Interface) _harvest_ (replaceStore bool) (error) {
 	return nil
 }
 
-func (i *Interface) Disconnect () (error) {
-	errX := i.underlyingNet.Disconnect (i.netAddr)
-	if errX != nil {
-		errMssg := fmt.Sprintf ("The network could not disconnect this interface.", errX.Error ())
-		return errors.New (errMssg)
-	}
-	return nil
-}
-
 func (i *Interface) destroy () (error) {
 	errX := i._harvest_ (false)
 	if errX != nil && errX == IntErrNoStoreAvail {
