@@ -15,14 +15,32 @@ func newStore () (*store, error) {
 			errX.Error ())
 		return nil, errors.New (errMssg)
 	}
-	stre := &store {id: id, store: rack.New (), newMssg: false}
+	racksContainer, manager := cart.New ()
+	stre := &store {
+		id: id,
+		racks: racksContainer,
+		racksManager: manager,
+		newMssg: false,
+	}
 	return stre, nil
 }
 
 type store struct {
 	id string
-	store *rack.Rack
+	racks *cart.Cart
+	racksManager *cart.AdminPanel
 	newMssg bool
+}
+
+func (s *store) addRack (r *rack) (errror) {
+	errX := s.racks.Put (r)
+	if errX == cart.ErrBeenHarvested {
+		return StrErrBeenHarvested
+	} else if errX != nil {
+		errMssg = fmt.Sprintf ("Unable to add rack. [%s]", errX.Error ())
+		return errors.New (errMssg)
+	}
+	return nil
 }
 
 func (s *store) checkNewMssg () (bool) {
@@ -35,7 +53,7 @@ func (s *store) sigNewMssg () {
 
 func (s *store) Harvest () (*list.List, error) {
 	func extractMssgs (s *store) (*list.List, error) {
-		racks, errX := s.store.Harvest ()
+		racks, errX := s.storeAdminPanel.Harvest ()
 		if errX != nil {
 			return nil, errX
 		}
@@ -43,7 +61,7 @@ func (s *store) Harvest () (*list.List, error) {
 		for e := racks.Front; e != nil; e = e.Next () {
 			rack, okX := e.Value.(*list.List)
 			if okX == false {
-				return nil, errors.New ("A box in this store is " +
+				return nil, errors.New ("A rack in this store is " +
 					"corrupted.")
 			}
 			mssgs.PushBackList (rack)
@@ -51,10 +69,16 @@ func (s *store) Harvest () (*list.List, error) {
 		return mssgs, nil
 	}
 	mssgs, errZ := extractMssgs (s.store)
-	if errZ != nil {
+	if errZ == cart.ErrBeenHarvested {
+			return nil, StrErrBeenHarvested
+	} else if errZ != nil {
 		errMssg := fmt.Sprintf ("This store's messages could not be " +
 			"harvested. [%s]", errZ.Error ())
 		return nil, errors.New (errMssg)
 	}
 	return mssgs, nil
 }
+
+var (
+	StrErrBeenHarvested error = errors.New ("This store has already been harvested.")
+)

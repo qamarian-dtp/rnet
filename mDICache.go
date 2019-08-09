@@ -5,12 +5,23 @@ import (
 )
 
 func newMDICache () {
-	return &mDICache {sync.Mutex {}, make (map[string]*mDInfo}
+	return &mDICache {make (map[string]*mDInfo}
 }
 
 type mDICache struct {
-	locker sync.Mutex
-	info map[string]*mDInfo
+	mdi map[string]*mDInfo
 }
 
-func 
+func (c *mDICache) Get (netAddr string) (*mDInfo) {
+	if netAddr == "" {
+		return nil
+	}
+	return c.mdi[netAddr]
+}
+
+func (c *mDICache) Put (netAddr string, mdi *mDInfo) {
+	if netAddr == "" {
+		return
+	}
+	c.mdi[netAddr] = mdi
+}

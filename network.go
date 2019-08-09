@@ -86,30 +86,18 @@ func (n *Network) Unlock () {
 	n.locked = false
 }
 
-func (n *Network) Freeze () {
-	n.freezed = true
-}
-
-func (n *Network) Freezed () (bool) {
-	return n.freezed
-}
-
-func (n *Network) Unfreeze () {
-	n.freezed = false
-}
-
-func (n *Network) getDInfo (netAddr string) (*dInfo, error) {
+func (n *Network) provideMDInfo (netAddr string) (*mDInfo, error) {
 	alloc, ok := n.allocations.alloc.Load (netAddr)
 	if ok == false {
 		return nil, NetErrNotInUse
 	}
 	intf, _ := alloc.(*Interface)
-	di, errX := intf.getDInfo ()
+	di, errX := intf.getMDInfo ()
 	if errX == IntErrNotConnected {
 		return nil, NetErrNotInUse
 	}
 	if errX != nil {
-		errMssg := fmt.Sprintf ("Unable to provide message delivery info [%s]",
+		errMssg := fmt.Sprintf ("Unable to get message delivery info from recipient. [%s]",
 			errX.Error ())
 		return nil, errors.New (errMssg)
 	}
@@ -119,4 +107,3 @@ func (n *Network) getDInfo (netAddr string) (*dInfo, error) {
 var (
 	NetErrNotInUse error = errors.New ("Network address not in use.")
 )
-

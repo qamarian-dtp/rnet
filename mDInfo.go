@@ -5,7 +5,7 @@ import (
 	"fmt"
 )
 
-func newMDInfo(recipientIntf *Interface) (*dInfo) {
+func newMDInfo(recipientIntf *Interface) (*mDInfo) {
 	rk := newRack ()
 	return &dInfo {recipientIntf, rk}
 }
@@ -16,29 +16,16 @@ type mDInfo struct {
 }
 
 func (mdi *mDInfo) sendMssg (mssg interface {}) (error) {
-	if mdi.senderRack.getState () == RckStateNew {
-		errM := mdi.recipientIntf.getStore ().addRack (mdi.senderRack)
-		if errM != nil {
-			errMssg := fmt.Sprintf ("Unable to add new rack to the " +
-				"store. [%s]", errM.Error ())
-			return errors.New (errMssg)
-		}
-		mdi.senderRack.activate ()
-	}
-
-	oldRack := mdi.senderRack
-
 	addBeginning:
-
-	if mdi.recipientInt.getNetAddr () == "" {
+	recipientStore := mdi.recipientInt.getStore ()
+	if recipientStore == nil {
 		return MdiErrNotConnected
-	} else if mdi.recipientInt.getClosedSig () == true {
-		return MdiErrClosed
 	}
 	errX := mdi.senderRack.addMssg (mssg)
-	if errX == RckErrToBeHarvested {
+	if errX == RckErrBeenHarvested {
+		oldRack := mdi.senderRack
 		mdi.senderRack = newRack ()
-		errY := mdi.recipientIntf.getStore ().addRack (mdi.senderRack)
+		errY := recipientStore.addRack (mdi.senderRack)
 		if errY != nil {
 			mdi.senderRack = oldRack
 			errMssg := fmt.Sprintf ("Unable to add new rack to the " +
@@ -47,10 +34,12 @@ func (mdi *mDInfo) sendMssg (mssg interface {}) (error) {
 		}
 		goto addBeginning
 	} else if errX != nil {
-		errrMssg := fmt.Sprintf ("Unable to add new rack to the store. " +
+		errrMssg := fmt.Sprintf ("Unable to add message to the store. " +
 			"[%s]", errX.Error ())
 		return errors.New (errMssg)
 	}
+	recipientStore.sigNewMssg ()
+	return nil
 }
 
 var (

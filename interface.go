@@ -72,7 +72,63 @@ func (i *Interface) getStore () (*store) {
 }
 
 func (i *Interface) Send (mssg interface {}, recipient string) (error) {
+	if mssg == nil {
+		return errors.New ("Sending of nil message is not supported.")
+	}
+	if recipient == "" {
+		return errors.New ("No recipient network address was specified.")
+	}
+	attemptBeginning:
+	okX := atomic.CompareAndSendInt32 (&i.netState, IntStateIdle, IntStateSendingTo)
+	if okX == false {
+		switch i.NetState {
+			case IntStateIdle:
+				runtime.Gosched ()
+				goto attemptBeginning
+			case IntStateSendingTo:
+				runtime.Gosched ()
+				goto attemptBeginning
+			case IntStateDestroyed:
+				return IntErrNotConnected
+			default:
+				return errors.New ("Interface is in an invalid state.")
+		}
+	}
+	defer func () {
+		i.netState = IntStateIdle
+	} ()
+	mdi := i.cache.Get (recipient)
+	if mdi == nil {
+		var errG error
+		mdi, errG = i.underlyingNet.provideMDInfo (netAddr)
+		if errG == NetErrNotInUse {
+			return IntErrAddrNotInUse
+		} else if errG != nil {
+			errMssg := fmt.Sprintf ("Unable to retrieve a message delivery info for the recipient network address.")
+			return errors.New (errMssg)
+		}
+	}
+	errE := mdi.sendMssg (recipient)
+	if errE != nil {
+		errMssg := fmt.Sprintf ("Unable to send message. [%s]", errE.Error ())
+		return errors.New (errMssg)
+	}
+	return nil
+}
 
+func (i *Interface) Read () (interface {}, error) {
+	readBeginning:
+
+	mssg := i.harvest.Front ()
+	if mssg == nil && (len (i.stash) == 0 || i.deliveryStore.checkNewMssg () == true) {
+		errM := i._harvest_ ()
+		if errM ==
+		
+		i.harvest = mssgsY
+		goto readBeginning
+	}
+	i.harvest.Delete (mssg)
+	return mssg.Value, nil
 }
 
 func (i *Interface) _harvest_ (replaceStore bool) (error) {
@@ -113,21 +169,6 @@ func (i *Interface) _harvest_ (replaceStore bool) (error) {
 	return nil
 }
 
-func (i *Interface) Read () (interface {}, error) {
-	readBeginning:
-
-	mssg := i.harvest.Front ()
-	if mssg == nil && (len (i.stash) == 0 || i.deliveryStore.checkNewMssg () == true) {
-		errM := i._harvest_ ()
-		if errM ==
-		
-		i.harvest = mssgsY
-		goto readBeginning
-	}
-	i.harvest.Delete (mssg)
-	return mssg.Value, nil
-}
-
 func (i *Interface) Disconnect () {}
 
 func (i *Interface) destroy () {
@@ -146,6 +187,7 @@ var (
 	IntStateSendingTo int32 = 1
 	IntStateDestroyed int32 = 2
 	
-	IntErrNoStoreAvail error = errors.New ("This interface has no store."))
+	IntErrNoStoreAvail error = errors.New ("This interface has no store.")
 	IntErrNotConnected error = errors.New ("Interface is not connected.")
+	IntErrAddrNotInUse error = errors.New ("The recipient network address provided is not in use.")
 )
