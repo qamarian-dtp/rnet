@@ -23,7 +23,8 @@ func (r *rack) addMssg (mssg interface {}) (error) {
 	if errX == cart.ErrBeenHarvested {
 		return RckErrBeenHarvested
 	} else if errX != nil {
-		errMssg := fmt.Sprintf ("Unable to add message to rack. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("Unable to add message to rack. [%s]",
+			errX.Error ())
 		return errors.New (errMssg)
 	}
 	return nil

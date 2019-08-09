@@ -9,9 +9,6 @@ type mDICache struct {
 }
 
 func (c *mDICache) Get (netAddr string) (*mDInfo) {
-	if netAddr == "" {
-		return nil
-	}
 	return c.mdi[netAddr]
 }
 

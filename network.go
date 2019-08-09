@@ -61,11 +61,13 @@ func (n *Network) Disconnect (netAddr string) (error) {
 	n.allocations.alloc.Delete (netAddr)
 	addrUser, okY := alloc.(*Interface)
 	if okY == false {
-		return errors.New ("Address-allocation-data value could not be treated as an interface.")
+		return errors.New ("Address-allocation-data value could not be " +
+			"treated as an interface.")
 	}
 	errX := addrUser.destroy ()
 	if errX != nil {
-		errMssg := fmt.Sprintf ("The interface using the address could not be destroyed. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("The interface using the address could " +
+			"not be destroyed. [%s]", errX.Error ())
 		return errors.New (errMssg)
 	}
 	return nil
@@ -82,7 +84,8 @@ func (n *Network) provideMDInfo (netAddr string) (*mDInfo, error) {
 		return nil, NetErrNotInUse
 	}
 	if errX != nil {
-		errMssg := fmt.Sprintf ("Unable to get message-delivery info from recipient. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("Unable to get message-delivery info " +
+		 	"from recipient. [%s]", errX.Error ())
 		return nil, errors.New (errMssg)
 	}
 	return di, nil

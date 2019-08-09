@@ -108,7 +108,8 @@ func (i *Interface) Send (mssg interface {}, recipient string) (error) {
 		if errG == NetErrNotInUse {
 			return IntErrAddrNotInUse
 		} else if errG != nil {
-			errMssg := fmt.Sprintf ("Unable to retrieve a message delivery info for the recipient network address.")
+			errMssg := fmt.Sprintf ("Unable to retrieve a message " +
+				"delivery info for the recipient network address.")
 			return errors.New (errMssg)
 		}
 		i.cache.Put (mdi, recipient)
@@ -129,8 +130,8 @@ func (i *Interface) Read () (interface {}, error) {
 		if ((errM == nil) && (i.harvest.Len () == 0)) || errM == IntErrNoStoreAvail {
 			return nil, nil
 		} else if errM != nil {
-			errMssg := fmt.Sprintf ("Unable to harvest store. [%s]", 
-			errM.Error ())
+			errMssg := fmt.Sprintf ("Unable to harvest store. [%s]",
+				errM.Error ())
 			return nil, errors.New (errMssg)
 		}
 		goto readBeginning
@@ -147,8 +148,8 @@ func (i *Interface) _harvest_ (replaceStore bool) (error) {
 	for _, stash := range i.stash {
 		stashMssgs, errY := stash.racksManager.Harvest ()
 		if errY != nil {
-			errMssg := fmt.Sprintf ("Messages of a stashed store could not be " +
-				"harvested. [%s]", errY.Error ())
+			errMssg := fmt.Sprintf ("Messages of a stashed store could" + 
+				"not be harvested. [%s]", errY.Error ())
 			return errors.New (errMssg)
 		}
 		mssgsX.PushBackList (stashMssgs)
@@ -157,7 +158,8 @@ func (i *Interface) _harvest_ (replaceStore bool) (error) {
 	if replaceStore == true {
 		newStre, errX := newStore ()
 		if errX != nil {
-			errMssg := fmt.Sprintf ("A new store, to replace current store, could not be created. [%s]", errX.Error ())
+			errMssg := fmt.Sprintf ("A new store, to replace current " +
+				"store, could not be created. [%s]", errX.Error ())
 			return errors.New (errMssg)
 		}
 		i.deliveryStore = newStre
@@ -168,7 +170,7 @@ func (i *Interface) _harvest_ (replaceStore bool) (error) {
 	if errY != nil {
 		i.stash = append (i.stash, oldStore)
 		errMssg := fmt.Sprintf ("Messages of the current store could not be " +
-				"harvested. [%s]", errY.Error ())
+			"harvested. [%s]", errY.Error ())
 		return errors.New (errMssg)
 	}
 	i.harvest.PushBackList (mssgsX)
@@ -180,13 +182,12 @@ func (i *Interface) _harvest_ (replaceStore bool) (error) {
 func (i *Interface) destroy () (error) {
 	errX := i._harvest_ (false)
 	if errX != nil && errX == IntErrNoStoreAvail {
-		errMssg := fmt.Sprintf ("Store could not be harvested. [%s]", 
-		errX.Error ())
+		errMssg := fmt.Sprintf ("Store could not be harvested. [%s]",
+			errX.Error ())
 		return errors.New (errMssg)
 	}
 	changeoverBeginning:
-	okX := atomic.CompareAndSwapInt32 (&i.netState, IntStateIdle, 
-	IntStateDestroyed)
+	okX := atomic.CompareAndSwapInt32 (&i.netState, IntStateIdle, IntStateDestroyed)
 	if okX == false {
 		switch i.netState {
 			case IntStateIdle:
@@ -218,5 +219,6 @@ var (
 
 	IntErrNoStoreAvail error = errors.New ("This interface has no store.")
 	IntErrNotConnected error = errors.New ("Interface is not connected.")
-	IntErrAddrNotInUse error = errors.New ("The recipient network address provided is not in use.")
+	IntErrAddrNotInUse error = errors.New ("The recipient network address " +
+		"provided is not in use.")
 )
