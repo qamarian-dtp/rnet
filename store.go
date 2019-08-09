@@ -4,8 +4,8 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"github.com/qamarian-dtp/cart.v0"
-	"github.com/qamarian-dtp/str.v0"
+	"gopkg.in/qamarian-dtp/cart.v0"
+	"gopkg.in/qamarian-lib/str.v1"
 )
 
 func newStore () (*store, error) {
@@ -32,12 +32,12 @@ type store struct {
 	newMssg bool
 }
 
-func (s *store) addRack (r *rack) (errror) {
+func (s *store) addRack (r *rack) (error) {
 	errX := s.racks.Put (r)
 	if errX == cart.ErrBeenHarvested {
 		return StrErrBeenHarvested
 	} else if errX != nil {
-		errMssg = fmt.Sprintf ("Unable to add rack. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("Unable to add rack. [%s]", errX.Error ())
 		return errors.New (errMssg)
 	}
 	return nil
@@ -52,13 +52,13 @@ func (s *store) sigNewMssg () {
 }
 
 func (s *store) Harvest () (*list.List, error) {
-	func extractMssgs (s *store) (*list.List, error) {
-		racks, errX := s.storeAdminPanel.Harvest ()
+	extractMssgs := func (s *store) (*list.List, error) {
+		racks, errX := s.racksManager.Harvest ()
 		if errX != nil {
 			return nil, errX
 		}
 		mssgs := list.New ()
-		for e := racks.Front; e != nil; e = e.Next () {
+		for e := racks.Front (); e != nil; e = e.Next () {
 			rack, okX := e.Value.(*list.List)
 			if okX == false {
 				return nil, errors.New ("A rack in this store is " +
@@ -68,7 +68,7 @@ func (s *store) Harvest () (*list.List, error) {
 		}
 		return mssgs, nil
 	}
-	mssgs, errZ := extractMssgs (s.store)
+	mssgs, errZ := extractMssgs (s)
 	if errZ == cart.ErrBeenHarvested {
 			return nil, StrErrBeenHarvested
 	} else if errZ != nil {

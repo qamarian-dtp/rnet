@@ -1,11 +1,7 @@
 package rnet
 
-import (
-	"sync"
-)
-
-func newMDICache () {
-	return &mDICache {make (map[string]*mDInfo}
+func newMDICache () (*mDICache) {
+	return &mDICache {make (map[string]*mDInfo)}
 }
 
 type mDICache struct {

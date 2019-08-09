@@ -1,4 +1,4 @@
-package rner
+package rnet
 
 import (
 	"container/list"
@@ -9,7 +9,7 @@ import (
 
 func newRack () (*rack) {
 	rk := &rack {}
-	rk.mssgCart, rk.adminPanel = cart.New ()
+	rk.mssgs, rk.mssgsManager = cart.New ()
 	return rk
 }
 
@@ -27,6 +27,7 @@ func (r *rack) addMssg (mssg interface {}) (error) {
 		return errors.New (errMssg)
 	}
 	return nil
+}
 
 func (r *rack) harvest () (*list.List, error) {
 	mssgs, errX := r.mssgsManager.Harvest ()

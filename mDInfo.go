@@ -17,7 +17,7 @@ type mDInfo struct {
 
 func (mdi *mDInfo) sendMssg (mssg interface {}) (error) {
 	addBeginning:
-	recipientStore := mdi.recipientInt.getStore ()
+	recipientStore := mdi.recipientIntf.getStore ()
 	if recipientStore == nil {
 		return MdiErrNotConnected
 	}
@@ -34,7 +34,7 @@ func (mdi *mDInfo) sendMssg (mssg interface {}) (error) {
 		}
 		goto addBeginning
 	} else if errX != nil {
-		errrMssg := fmt.Sprintf ("Unable to add message to the store. " +
+		errMssg := fmt.Sprintf ("Unable to add message to the store. " +
 			"[%s]", errX.Error ())
 		return errors.New (errMssg)
 	}

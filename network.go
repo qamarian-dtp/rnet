@@ -33,7 +33,7 @@ type Network struct {
 	}
 }
 
-func (n *Network) NewIntf (userID, netAddr string) (*Interface) {
+func (n *Network) NewIntf (userID, netAddr string) (*Interface, error) {
 	if userID == "" {
 		return nil, errors.New ("User ID can not be an empty string.")
 	}
@@ -54,13 +54,13 @@ func (n *Network) NewIntf (userID, netAddr string) (*Interface) {
 }
 
 func (n *Network) Disconnect (netAddr string) (error) {
-	alloc, ok := n.allocations.alloc.Load (netAddr)
-	if ok == false {
+	alloc, okX := n.allocations.alloc.Load (netAddr)
+	if okX == false {
 		return NetErrNotInUse
 	}
 	n.allocations.alloc.Delete (netAddr)
-	addrUser, _ := alloc.(*Interface)
-	if okX == false {
+	addrUser, okY := alloc.(*Interface)
+	if okY == false {
 		return errors.New ("Address-allocation-data value could not be treated as an interface.")
 	}
 	errX := addrUser.destroy ()

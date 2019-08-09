@@ -4,14 +4,14 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"gopkg.in/qamarian-dtp/cart.v0"
 	"gopkg.in/qamarian-lib/str.v1"
+	"runtime"
 	"sync/atomic"
 )
 
 func newIntf (underlyingNet *Network, user, netAddr string) (*Interface, error) {
-	if underlyingNetwork == nil || user == "" || netAddr == "" {
-		return errors.New ("One or more of the inputs are invalid.")
+	if underlyingNet == nil || user == "" || netAddr == "" {
+		return nil, errors.New ("One or more of the inputs are invalid.")
 	}
 	i := Interface {}
 	var errX error
@@ -47,7 +47,7 @@ type Interface struct {
 	deliveryStore *store
 	stash []*store
 	harvest *list.List
-	cache *mdiCache
+	cache *mDICache
 }
 
 func (i *Interface) IntfID () (string) {
@@ -82,7 +82,8 @@ func (i *Interface) Send (mssg interface {}, recipient string) (error) {
 		return errors.New ("No recipient network address was specified.")
 	}
 	lockingBeginning:
-	okX := atomic.CompareAndSendInt32 (&i.netState, IntStateIdle, IntStateSendingTo)
+	okX := atomic.CompareAndSwapInt32 (&i.netState, IntStateIdle, 
+	IntStateSendingTo)
 	if okX == false {
 		switch i.netState {
 			case IntStateIdle:
@@ -103,7 +104,7 @@ func (i *Interface) Send (mssg interface {}, recipient string) (error) {
 	mdi := i.cache.Get (recipient)
 	if mdi == nil {
 		var errG error
-		mdi, errG = i.underlyingNet.provideMDInfo (netAddr)
+		mdi, errG = i.underlyingNet.provideMDInfo (recipient)
 		if errG == NetErrNotInUse {
 			return IntErrAddrNotInUse
 		} else if errG != nil {
@@ -128,12 +129,13 @@ func (i *Interface) Read () (interface {}, error) {
 		if ((errM == nil) && (i.harvest.Len () == 0)) || errM == IntErrNoStoreAvail {
 			return nil, nil
 		} else if errM != nil {
-			errMssg = fmt.Sprintf ("Unable to harvest store. [%s]", errM.Error ())
-			return errors.New (errMssg)
+			errMssg := fmt.Sprintf ("Unable to harvest store. [%s]", 
+			errM.Error ())
+			return nil, errors.New (errMssg)
 		}
 		goto readBeginning
 	}
-	i.harvest.Delete (mssg)
+	i.harvest.Remove (mssg)
 	return mssg.Value, nil
 }
 
@@ -141,9 +143,9 @@ func (i *Interface) _harvest_ (replaceStore bool) (error) {
 	if i.deliveryStore == nil {
 		return IntErrNoStoreAvail
 	}
-	mssgsX ;= list.New ()
-	for stash := range i.stash {
-		stashMssgs, errY := stash.Harvest ()
+	mssgsX := list.New ()
+	for _, stash := range i.stash {
+		stashMssgs, errY := stash.racksManager.Harvest ()
 		if errY != nil {
 			errMssg := fmt.Sprintf ("Messages of a stashed store could not be " +
 				"harvested. [%s]", errY.Error ())
@@ -175,21 +177,25 @@ func (i *Interface) _harvest_ (replaceStore bool) (error) {
 	return nil
 }
 
-func (i *Interface) Disconnect (error) {
+func (i *Interface) Disconnect () (error) {
 	errX := i.underlyingNet.Disconnect (i.netAddr)
 	if errX != nil {
 		errMssg := fmt.Sprintf ("The network could not disconnect this interface.", errX.Error ())
 		return errors.New (errMssg)
 	}
+	return nil
 }
 
-func (i *Interface) destroy (error) {
+func (i *Interface) destroy () (error) {
 	errX := i._harvest_ (false)
 	if errX != nil && errX == IntErrNoStoreAvail {
-		return errors.New ("Store could not be harvested. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("Store could not be harvested. [%s]", 
+		errX.Error ())
+		return errors.New (errMssg)
 	}
 	changeoverBeginning:
-	okX := atomic.CompareAndSendInt32 (&i.netState, IntStateIdle, IntStateDestroyed)
+	okX := atomic.CompareAndSwapInt32 (&i.netState, IntStateIdle, 
+	IntStateDestroyed)
 	if okX == false {
 		switch i.netState {
 			case IntStateIdle:
@@ -218,7 +224,7 @@ var (
 	IntStateIdle      int32 = 0
 	IntStateSendingTo int32 = 1
 	IntStateDestroyed int32 = 2
-	
+
 	IntErrNoStoreAvail error = errors.New ("This interface has no store.")
 	IntErrNotConnected error = errors.New ("Interface is not connected.")
 	IntErrAddrNotInUse error = errors.New ("The recipient network address provided is not in use.")
