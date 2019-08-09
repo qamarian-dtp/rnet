@@ -7,7 +7,7 @@ import (
 
 func newMDInfo(recipientIntf *Interface) (*mDInfo) {
 	rk := newRack ()
-	return &dInfo {recipientIntf, rk}
+	return &mDInfo {recipientIntf, rk}
 }
 
 type mDInfo struct {

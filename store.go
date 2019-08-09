@@ -4,8 +4,8 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"github.com/qamarian-dtp/rack.v0"
-	"sync"
+	"github.com/qamarian-dtp/cart.v0"
+	"github.com/qamarian-dtp/str.v0"
 )
 
 func newStore () (*store, error) {

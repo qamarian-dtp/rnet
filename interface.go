@@ -4,12 +4,15 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"gopkg.in/qamarian-dtp/rack.v0"
+	"gopkg.in/qamarian-dtp/cart.v0"
 	"gopkg.in/qamarian-lib/str.v1"
-	"sync"
+	"sync/atomic"
 )
 
 func newIntf (underlyingNet *Network, user, netAddr string) (*Interface, error) {
+	if underlyingNetwork == nil || user == "" || netAddr == "" {
+		return errors.New ("One or more of the inputs are invalid.")
+	}
 	i := Interface {}
 	var errX error
 	i.id, errX = str.UniquePredsafeStr (32)
@@ -30,7 +33,7 @@ func newIntf (underlyingNet *Network, user, netAddr string) (*Interface, error) 
 	}
 	i.deliveryStore = dStore
 	i.stash = []*store {}
-	i.harvest = &list.New ()
+	i.harvest = list.New ()
 	i.cache = newMDICache ()
 	return &i, nil
 }
@@ -40,7 +43,7 @@ type Interface struct {
 	underlyingNet *Network
 	user string
 	netAddr string
-	netState int33
+	netState int32
 	deliveryStore *store
 	stash []*store
 	harvest *list.List
@@ -78,16 +81,16 @@ func (i *Interface) Send (mssg interface {}, recipient string) (error) {
 	if recipient == "" {
 		return errors.New ("No recipient network address was specified.")
 	}
-	attemptBeginning:
+	lockingBeginning:
 	okX := atomic.CompareAndSendInt32 (&i.netState, IntStateIdle, IntStateSendingTo)
 	if okX == false {
-		switch i.NetState {
+		switch i.netState {
 			case IntStateIdle:
 				runtime.Gosched ()
-				goto attemptBeginning
+				goto lockingBeginning
 			case IntStateSendingTo:
 				runtime.Gosched ()
-				goto attemptBeginning
+				goto lockingBeginning
 			case IntStateDestroyed:
 				return IntErrNotConnected
 			default:
@@ -107,6 +110,7 @@ func (i *Interface) Send (mssg interface {}, recipient string) (error) {
 			errMssg := fmt.Sprintf ("Unable to retrieve a message delivery info for the recipient network address.")
 			return errors.New (errMssg)
 		}
+		i.cache.Put (mdi, recipient)
 	}
 	errE := mdi.sendMssg (recipient)
 	if errE != nil {
@@ -118,13 +122,15 @@ func (i *Interface) Send (mssg interface {}, recipient string) (error) {
 
 func (i *Interface) Read () (interface {}, error) {
 	readBeginning:
-
 	mssg := i.harvest.Front ()
-	if mssg == nil && (len (i.stash) == 0 || i.deliveryStore.checkNewMssg () == true) {
-		errM := i._harvest_ ()
-		if errM ==
-		
-		i.harvest = mssgsY
+	if mssg == nil && (len (i.stash) > 0 || i.deliveryStore.checkNewMssg () == true) {
+		errM := i._harvest_ (true)
+		if ((errM == nil) && (i.harvest.Len () == 0)) || errM == IntErrNoStoreAvail {
+			return nil, nil
+		} else if errM != nil {
+			errMssg = fmt.Sprintf ("Unable to harvest store. [%s]", errM.Error ())
+			return errors.New (errMssg)
+		}
 		goto readBeginning
 	}
 	i.harvest.Delete (mssg)
@@ -171,8 +177,28 @@ func (i *Interface) _harvest_ (replaceStore bool) (error) {
 
 func (i *Interface) Disconnect () {}
 
-func (i *Interface) destroy () {
-	i.netAddr = ""
+func (i *Interface) destroy (error) {
+	errX := i._harvest_ (false)
+	if errX != nil && errX == IntErrNoStoreAvail {
+		return errors.New ("Store could not be harvested. [%s]", errX.Error ())
+	}
+	changeoverBeginning:
+	okX := atomic.CompareAndSendInt32 (&i.netState, IntStateIdle, IntStateDestroyed)
+	if okX == false {
+		switch i.netState {
+			case IntStateIdle:
+				runtime.Gosched ()
+				goto changeoverBeginning
+			case IntStateSendingTo:
+				runtime.Gosched ()
+				goto changeoverBeginning
+			case IntStateDestroyed:
+				return nil
+			default:
+				return errors.New ("Interface is in an invalid state.")
+		}
+	}
+	return nil
 }
 
 func (i *Interface) getMDInfo () (*mDInfo, error) {

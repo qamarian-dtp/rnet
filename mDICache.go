@@ -19,7 +19,7 @@ func (c *mDICache) Get (netAddr string) (*mDInfo) {
 	return c.mdi[netAddr]
 }
 
-func (c *mDICache) Put (netAddr string, mdi *mDInfo) {
+func (c *mDICache) Put (mdi *mDInfo, netAddr string) {
 	if netAddr == "" {
 		return
 	}
