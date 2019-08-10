@@ -33,10 +33,7 @@ type Network struct {
 	}
 }
 
-func (n *Network) NewIntf (userID, netAddr string) (*Interface, error) {
-	if userID == "" {
-		return nil, errors.New ("User ID can not be an empty string.")
-	}
+func (n *Network) NewIntf (netAddr string) (*Interface, error) {
 	if netAddr == "" {
 		return nil, errors.New ("Network address can not be an empty string.")
 	}
@@ -44,7 +41,7 @@ func (n *Network) NewIntf (userID, netAddr string) (*Interface, error) {
 	if ok == true {
 		return nil, NetErrInUse
 	}
-	i, errX := newIntf (n, userID, netAddr)
+	i, errX := newIntf (netAddr, n)
 	if errX != nil {
 		errMssg := fmt.Sprintf ("Unable to create new interface. [%s]",
 			errX.Error ())

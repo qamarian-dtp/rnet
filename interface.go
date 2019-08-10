@@ -4,25 +4,16 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"gopkg.in/qamarian-lib/str.v1"
 	"runtime"
 	"sync/atomic"
 )
 
-func newIntf (underlyingNet *Network, user, netAddr string) (*Interface, error) {
-	if underlyingNet == nil || user == "" || netAddr == "" {
+func newIntf (netAddr string, underlyingNet *Network) (*Interface, error) {
+	if netAddr == "" || underlyingNet == nil {
 		return nil, errors.New ("One or more of the inputs are invalid.")
 	}
 	i := Interface {}
-	var errX error
-	i.id, errX = str.UniquePredsafeStr (32)
-	if errX != nil {
-		errMssg := fmt.Sprintf ("Unable to generate ID for interface. [%s]",
-			errX.Error ())
- 		return nil, errors.New (errMssg)
-	}
 	i.underlyingNet = underlyingNet
-	i.user = user
 	i.netAddr = netAddr
 	i.netState = IntStateIdle
 	dStore, errY := newStore ()
@@ -39,10 +30,8 @@ func newIntf (underlyingNet *Network, user, netAddr string) (*Interface, error) 
 }
 
 type Interface struct {
-	id string
-	underlyingNet *Network
-	user string
 	netAddr string
+	underlyingNet *Network
 	netState int32
 	deliveryStore *store
 	stash []*store
@@ -50,20 +39,12 @@ type Interface struct {
 	cache *mDICache
 }
 
-func (i *Interface) IntfID () (string) {
-	return i.id
+func (i *Interface) NetAddr () (string) {
+	return i.netAddr
 }
 
 func (i *Interface) getUNet () (*Network) {
 	return i.underlyingNet
-}
-
-func (i *Interface) User () (string) {
-	return i.user
-}
-
-func (i *Interface) NetAddr () (string) {
-	return i.netAddr
 }
 
 func (i *Interface) NetState () (int32) {
