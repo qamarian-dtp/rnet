@@ -44,10 +44,16 @@ func (s *store) addRack (r *rack) (error) {
 }
 
 func (s *store) checkNewMssg () (bool) {
+	if s == nil {
+		return false
+	}
 	return s.newMssg
 }
 
 func (s *store) sigNewMssg () {
+	if s == nil {
+		return
+	}
 	s.newMssg = true
 }
 
