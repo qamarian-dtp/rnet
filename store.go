@@ -59,18 +59,24 @@ func (s *store) Harvest () (*list.List, error) {
 		}
 		mssgs := list.New ()
 		for e := racks.Front (); e != nil; e = e.Next () {
-			rack, okX := e.Value.(*list.List)
+			rack, okX := e.Value.(*rack)
 			if okX == false {
 				return nil, errors.New ("A rack in this store is " +
 					"corrupted.")
 			}
-			mssgs.PushBackList (rack)
+			rackMssgs, errD := rack.harvest ()
+			if errD != nil {
+				errMssg := fmt.Sprintf ("A rack could not be " +
+					"harvested. [%s]", errD.Error ())
+				return nil, errors.New (errMssg)
+			}
+			mssgs.PushBackList (rackMssgs)
 		}
 		return mssgs, nil
 	}
 	mssgs, errZ := extractMssgs (s)
 	if errZ == cart.ErrBeenHarvested {
-			return nil, StrErrBeenHarvested
+		return nil, StrErrBeenHarvested
 	} else if errZ != nil {
 		errMssg := fmt.Sprintf ("This store's messages could not be " +
 			"harvested. [%s]", errZ.Error ())
@@ -82,3 +88,4 @@ func (s *store) Harvest () (*list.List, error) {
 var (
 	StrErrBeenHarvested error = errors.New ("This store has already been harvested.")
 )
+

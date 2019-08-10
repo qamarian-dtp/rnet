@@ -82,8 +82,8 @@ func (i *Interface) Send (mssg interface {}, recipient string) (error) {
 		return errors.New ("No recipient network address was specified.")
 	}
 	lockingBeginning:
-	okX := atomic.CompareAndSwapInt32 (&i.netState, IntStateIdle, 
-	IntStateSendingTo)
+	okX := atomic.CompareAndSwapInt32 (&i.netState, IntStateIdle,
+		IntStateSendingTo)
 	if okX == false {
 		switch i.netState {
 			case IntStateIdle:
@@ -114,7 +114,7 @@ func (i *Interface) Send (mssg interface {}, recipient string) (error) {
 		}
 		i.cache.Put (mdi, recipient)
 	}
-	errE := mdi.sendMssg (recipient)
+	errE := mdi.sendMssg (mssg)
 	if errE != nil {
 		errMssg := fmt.Sprintf ("Unable to send message. [%s]", errE.Error ())
 		return errors.New (errMssg)
@@ -125,16 +125,21 @@ func (i *Interface) Send (mssg interface {}, recipient string) (error) {
 func (i *Interface) Read () (interface {}, error) {
 	readBeginning:
 	mssg := i.harvest.Front ()
-	if mssg == nil && (len (i.stash) > 0 || i.deliveryStore.checkNewMssg () == true) {
-		errM := i._harvest_ (true)
-		if ((errM == nil) && (i.harvest.Len () == 0)) || errM == IntErrNoStoreAvail {
+	if mssg == nil {
+		if (len (i.stash) > 0 || i.deliveryStore.checkNewMssg () == true) {
+			errM := i._harvest_ (true)
+			if ((errM == nil) && (i.harvest.Len () == 0)) ||
+				errM == IntErrNoStoreAvail {
+				return nil, nil
+			} else if errM != nil {
+				errMssg := fmt.Sprintf ("Unable to harvest store. " +
+					"[%s]", errM.Error ())
+				return nil, errors.New (errMssg)
+			}
+			goto readBeginning
+		} else {
 			return nil, nil
-		} else if errM != nil {
-			errMssg := fmt.Sprintf ("Unable to harvest store. [%s]",
-				errM.Error ())
-			return nil, errors.New (errMssg)
 		}
-		goto readBeginning
 	}
 	i.harvest.Remove (mssg)
 	return mssg.Value, nil
@@ -209,7 +214,13 @@ func (i *Interface) getMDInfo () (*mDInfo, error) {
 	if i.netState == IntStateDestroyed {
 		return nil, IntErrNotConnected
 	}
-	return newMDInfo (i), nil
+	mdi, errX := newMDInfo (i)
+	if errX != nil {
+		errMssg := fmt.Sprintf ("Could not create an MD info. [%s]",
+			errX.Error ())
+		return nil, errors.New (errMssg)
+	}
+	return mdi, nil
 }
 
 var (

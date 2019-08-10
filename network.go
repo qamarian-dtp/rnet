@@ -50,6 +50,7 @@ func (n *Network) NewIntf (userID, netAddr string) (*Interface, error) {
 			errX.Error ())
 		return nil, errors.New (errMssg)
 	}
+	n.allocations.alloc.Store (netAddr, i)
 	return i, nil
 }
 

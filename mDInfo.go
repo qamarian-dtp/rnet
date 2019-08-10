@@ -3,11 +3,26 @@ package rnet
 import (
 	"errors"
 	"fmt"
+	"runtime"
 )
 
-func newMDInfo(recipientIntf *Interface) (*mDInfo) {
+func newMDInfo (recipientIntf *Interface) (*mDInfo, error) {
 	rk := newRack ()
-	return &mDInfo {recipientIntf, rk}
+	addBeginning:
+	recipientStore := recipientIntf.getStore ()
+	if recipientStore == nil {
+		return nil, MdiErrNotConnected
+	}
+	errX := recipientStore.addRack (rk)
+	if errX == StrErrBeenHarvested {
+		runtime.Gosched ()
+		goto addBeginning
+	} else if errX != nil {
+		errMssg := fmt.Sprintf ("Rack created could not be added to the " +
+			"recipient's store. [%s]", errX.Error ())
+		return nil, errors.New (errMssg)
+	}
+	return &mDInfo {recipientIntf, rk}, nil
 }
 
 type mDInfo struct {
