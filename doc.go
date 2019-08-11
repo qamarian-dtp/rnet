@@ -1,6 +1,8 @@
-// rNet (goroutine network) is a network allowing goroutines to communicate. By network,
-// I do not mean something like the internet. No, it is not. See this network as a more
-// versatile implementation of the Golang's channel.
+// rNet (Goroutine Network) is a set of data types/network that allows multiple
+// goroutines to easily communicate with one another.
+//
+// By network, I do not mean something like the internet. No, it is not. See this
+// network as a more versatile implementation of the Golang's channel.
 //
 // Assuming you want goroutines X, Y, and Z to communicate with one another, you could
 // create a communication network (an rNet) for them.

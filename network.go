@@ -8,15 +8,7 @@ import (
 
 // Create a new network using this function.
 func New () (*Network) {
-	net := Network {}
-	net.allocations = struct {
-		locker sync.Mutex
-		alloc sync.Map
-	}{
-		sync.Mutex {},
-		sync.Map {},
-	}
-	return &net
+	return &Network {sync.Map {}}
 }
 
 type Network struct {
@@ -64,7 +56,7 @@ func (n *Network) NewIntf (netAddr string) (*Interface, error) {
 //
 // Inputs
 //
-// input 0: The network address of the interface to diaconnect.
+// input 0: The network address of the interface to disconnect.
 //
 // Ouputs
 //
@@ -73,13 +65,13 @@ func (n *Network) NewIntf (netAddr string) (*Interface, error) {
 // NetErrNotInUse would be returned.
 func (n *Network) Disconnect (netAddr string) (error) {
 	// Trying to get the interface the net address is allocated to. { ...
-	alloc, okX := n.allocations.alloc.Load (netAddr)
+	alloc, okX := n.allocations.Load (netAddr)
 	if okX == false {
 		return NetErrNotInUse
 	}
 	// ... }
 	// Disconnecting the network interface. { ...
-	n.allocations.alloc.Delete (netAddr)
+	n.allocations.Delete (netAddr)
 	addrUser, okY := alloc.(*Interface)
 	if okY == false {
 		return errors.New ("Address-allocation-data value could not be " +
@@ -95,7 +87,7 @@ func (n *Network) Disconnect (netAddr string) (error) {
 	return nil
 }
 
-/* provideMDInfo () provides an MDI that could be used to aend messages to another
+/* provideMDInfo () provides an MDI that could be used to send messages to another
 	interface.
 
 	Inputs
@@ -110,7 +102,7 @@ func (n *Network) Disconnect (netAddr string) (error) {
 */
 func (n *Network) provideMDInfo (netAddr string) (*mDInfo, error) {
 	// Fetching the interface whose net addr was provided. { ...
-	alloc, ok := n.allocations.alloc.Load (netAddr)
+	alloc, ok := n.allocations.Load (netAddr)
 	if ok == false {
 		return nil, NetErrNotInUse
 	}

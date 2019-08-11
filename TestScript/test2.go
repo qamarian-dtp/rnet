@@ -37,10 +37,6 @@ func reader (i *rnet.Interface) {
 func main () {
 	fmt.Println ("Test has started.")
 	net := rnet.New ()
-	if errX != nil {
-		fmt.Println ("Network creation failed. Error:", errX.Error ())
-		return
-	}
 	intf1, err1 := net.NewIntf ("net-addr-1")
 	intf2, err2 := net.NewIntf ("net-addr-2")
 	intf3, err3 := net.NewIntf ("net-addr-3")
