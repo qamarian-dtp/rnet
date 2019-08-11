@@ -67,7 +67,7 @@ func (i *Interface) getUNet () (*Network) {
 	return i.underlyingNet
 }
 
-// NetAddr () provides the state of the interface. See the variable section for the
+// NetState () provides the state of the interface. See the variable section for the
 // possible states of an interface.
 func (i *Interface) NetState () (int32) {
 	return i.netState

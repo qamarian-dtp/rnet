@@ -7,6 +7,7 @@ import (
 	"gopkg.in/qamarian-dtp/cart.v1"
 )
 
+// newRack () helps create a new rack.
 func newRack () (*rack) {
 	rk := &rack {}
 	rk.mssgs, rk.mssgsManager = cart.New ()
@@ -14,10 +15,11 @@ func newRack () (*rack) {
 }
 
 type rack struct {
-	mssgs *cart.Cart
+	mssgs *cart.Cart              // The messages of the rack.
 	mssgsManager *cart.AdminPanel
 }
 
+// addMssg () adds a message to a rack.
 func (r *rack) addMssg (mssg interface {}) (error) {
 	errX := r.mssgs.Put (mssg)
 	if errX == cart.ErrBeenHarvested {

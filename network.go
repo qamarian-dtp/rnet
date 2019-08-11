@@ -27,7 +27,7 @@ type Network struct {
 // outpt 0: The network interface created. If an error ahould occur during
 // the creation the interface, value would be nil.
 //
-// outpt 1: If interface creation should fail, possible values include: NetErrInUse
+// outpt 1: If interface creation should fail, possible values include: NetErrInUse.
 func (n *Network) NewIntf (netAddr string) (*Interface, error) {
 	// Input data validation.
 	if netAddr == "" {
@@ -121,8 +121,6 @@ func (n *Network) provideMDInfo (netAddr string) (*mDInfo, error) {
 }
 
 var (
-	NetErrLocked error = errors.New ("Interface creation not allowed: network " +
-		"currently locked.")
 	NetErrInUse error = errors.New ("Network address already in use.")
 	NetErrNotInUse error = errors.New ("Network address not in use.")
 )

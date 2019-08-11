@@ -49,7 +49,8 @@ func (s *store) sigNewMssg () {
 }
 
 func (s *store) Harvest () (*list.List, error) {
-	extractMssgs := func (s *store) (*list.List, error) {
+	extractMssgs := func (s *store) (*list.List, error) { /* This function
+		extracts the messages in a given store. */
 		racks, errX := s.racksManager.Harvest ()
 		if errX != nil {
 			return nil, errX

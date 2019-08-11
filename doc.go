@@ -10,7 +10,7 @@
 // After creating the network, then create a network interface for each one of the
 // goroutines.
 //
-// A network interface is simply a data which can be uaed to send and receive messages
+// A network interface is simply a data which can be used to send and receive messages
 // from other goroutines on the same network.
 //
 //	net := rnet.New () // Creation of a new communication network
