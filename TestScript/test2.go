@@ -36,7 +36,7 @@ func reader (i *rnet.Interface) {
 
 func main () {
 	fmt.Println ("Test has started.")
-	net, errX := rnet.New ()
+	net := rnet.New ()
 	if errX != nil {
 		fmt.Println ("Network creation failed. Error:", errX.Error ())
 		return

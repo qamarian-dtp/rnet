@@ -40,11 +40,7 @@ func reader (i *rnet.Interface) {
 
 func main () {
 	fmt.Println ("Test has started.")
-	net, errX := rnet.New ()
-	if errX != nil {
-		fmt.Println ("Network creation failed.")
-		return
-	}
+	net := rnet.New ()
 	intf1, err1 := net.NewIntf ("send")
 	intf2, err2 := net.NewIntf ("recv")
 	intf3, err3 := net.NewIntf ("anth")

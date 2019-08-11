@@ -56,9 +56,6 @@ func (i *Interface) getStore () (*store) {
 }
 
 func (i *Interface) Send (mssg interface {}, recipient string) (error) {
-	if mssg == nil {
-		return errors.New ("Sending of nil message is not supported.")
-	}
 	if recipient == "" {
 		return errors.New ("No recipient network address was specified.")
 	}
@@ -89,8 +86,8 @@ func (i *Interface) Send (mssg interface {}, recipient string) (error) {
 		if errG == NetErrNotInUse {
 			return IntErrAddrNotInUse
 		} else if errG != nil {
-			errMssg := fmt.Sprintf ("Unable to retrieve a message " +
-				"delivery info for the recipient network address.")
+			errMssg := fmt.Sprintf ("Unable to retrieve a MDI for the " +
+				"recipient network address.")
 			return errors.New (errMssg)
 		}
 		i.cache.Put (mdi, recipient)

@@ -18,8 +18,8 @@ func newMDInfo (recipientIntf *Interface) (*mDInfo, error) {
 		runtime.Gosched ()
 		goto addBeginning
 	} else if errX != nil {
-		errMssg := fmt.Sprintf ("Rack created could not be added to the " +
-			"recipient's store. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("The rack created for the MDI could not be " +
+			"added to the recipient's store. [%s]", errX.Error ())
 		return nil, errors.New (errMssg)
 	}
 	return &mDInfo {recipientIntf, rk}, nil

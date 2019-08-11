@@ -4,7 +4,7 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"gopkg.in/qamarian-dtp/cart.v0"
+	"gopkg.in/qamarian-dtp/cart.v1"
 )
 
 func newRack () (*rack) {

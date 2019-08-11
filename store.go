@@ -4,29 +4,20 @@ import (
 	"container/list"
 	"errors"
 	"fmt"
-	"gopkg.in/qamarian-dtp/cart.v0"
-	"gopkg.in/qamarian-lib/str.v1"
+	"gopkg.in/qamarian-dtp/cart.v1"
 )
 
 func newStore () (*store, error) {
-	id, errX := str.UniquePredsafeStr (32)
-	if errX != nil {
-		errMssg := fmt.Sprintf ("ID could not be generated for store. [%s]",
-			errX.Error ())
-		return nil, errors.New (errMssg)
-	}
-	racksContainer, manager := cart.New ()
+	racks, racksManager := cart.New ()
 	stre := &store {
-		id: id,
-		racks: racksContainer,
-		racksManager: manager,
+		racks: racks,
+		racksManager: racksManager,
 		newMssg: false,
 	}
 	return stre, nil
 }
 
 type store struct {
-	id string
 	racks *cart.Cart
 	racksManager *cart.AdminPanel
 	newMssg bool
@@ -37,7 +28,7 @@ func (s *store) addRack (r *rack) (error) {
 	if errX == cart.ErrBeenHarvested {
 		return StrErrBeenHarvested
 	} else if errX != nil {
-		errMssg := fmt.Sprintf ("Unable to add rack. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("Unable to the add rack. [%s]", errX.Error ())
 		return errors.New (errMssg)
 	}
 	return nil
@@ -92,6 +83,7 @@ func (s *store) Harvest () (*list.List, error) {
 }
 
 var (
-	StrErrBeenHarvested error = errors.New ("This store has already been harvested.")
+	StrErrBeenHarvested error = errors.New ("This store has already been " +
+		"harvested.")
 )
 
