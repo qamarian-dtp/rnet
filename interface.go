@@ -46,7 +46,6 @@ func newIntf (netAddr string, underlyingNet *Network) (*Interface, error) {
 	return &i, nil
 }
 
-// A data type that could be used to send messages over a network.
 type Interface struct {
 	netAddr string         // The network address assigned to the interface.
 	underlyingNet *Network // The network the interface is attached to.

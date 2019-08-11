@@ -14,10 +14,13 @@
 // from other goroutines on the same network.
 //
 //	net := rnet.New () // Creation of a new communication network
+//
 //	netInterfaceForX, err1 := net.NewIntf ("x") /* Creation of a network
 //		interface for goroutine X. */
+//
 //	netInterfaceForY, err2 := net.NewIntf ("y") /* Creation of a network
 //		interface for goroutine Y. */
+//
 //	netInterfaceForZ, err3 := net.NewIntf ("z") /* Creation of a network
 //		interface for goroutine Z. */
 //
@@ -26,6 +29,7 @@
 //
 //	err1 := netInterfaceForX.Send ("hello", "y") /* Goroutine X sending "hello"
 //		to goroutine Y. */
+//
 //	mssg, err2 := netInterfaceForY.Read () /* Goroutine Y checking for any
 //		message that might have been sent to it. */
 //

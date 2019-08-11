@@ -11,10 +11,10 @@ func newMDInfo (recipientIntf *Interface) (*mDInfo, error) {
 	addBeginning:
 	recipientStore := recipientIntf.getStore ()
 	if recipientStore == nil {
-		return nil, MdiErrNotConnected
+		return nil, mdiErrNotConnected
 	}
 	errX := recipientStore.addRack (rk)
-	if errX == StrErrBeenHarvested {
+	if errX == strErrBeenHarvested {
 		runtime.Gosched ()
 		goto addBeginning
 	} else if errX != nil {
@@ -34,10 +34,10 @@ func (mdi *mDInfo) sendMssg (mssg interface {}) (error) {
 	addBeginning:
 	recipientStore := mdi.recipientIntf.getStore ()
 	if recipientStore == nil {
-		return MdiErrNotConnected
+		return mdiErrNotConnected
 	}
 	errX := mdi.senderRack.addMssg (mssg)
-	if errX == RckErrBeenHarvested {
+	if errX == rckErrBeenHarvested {
 		oldRack := mdi.senderRack
 		mdi.senderRack = newRack ()
 		errY := recipientStore.addRack (mdi.senderRack)
@@ -58,7 +58,7 @@ func (mdi *mDInfo) sendMssg (mssg interface {}) (error) {
 }
 
 var (
-	MdiErrNotConnected error = errors.New ("Recipient is not connected to the " +
+	mdiErrNotConnected error = errors.New ("Recipient is not connected to the " +
 		"network.")
-	MdiErrClosed error = errors.New ("Recipient is closed to new messages.")
+	mdiErrClosed error = errors.New ("Recipient is closed to new messages.")
 )

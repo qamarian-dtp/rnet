@@ -6,7 +6,6 @@ import (
 	"sync"
 )
 
-// Create a new network using this function.
 func New () (*Network) {
 	return &Network {sync.Map {}}
 }
@@ -58,7 +57,7 @@ func (n *Network) NewIntf (netAddr string) (*Interface, error) {
 //
 // input 0: The network address of the interface to disconnect.
 //
-// Ouputs
+// Outpts
 //
 // outpt 0: If the interface could not be successfully disconnected, value would not
 // be nil. Also, if no interface is using the network address provided as input 0,

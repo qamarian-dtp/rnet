@@ -26,7 +26,7 @@ type store struct {
 func (s *store) addRack (r *rack) (error) {
 	errX := s.racks.Put (r)
 	if errX == cart.ErrBeenHarvested {
-		return StrErrBeenHarvested
+		return strErrBeenHarvested
 	} else if errX != nil {
 		errMssg := fmt.Sprintf ("Unable to the add rack. [%s]", errX.Error ())
 		return errors.New (errMssg)
@@ -73,7 +73,7 @@ func (s *store) Harvest () (*list.List, error) {
 	}
 	mssgs, errZ := extractMssgs (s)
 	if errZ == cart.ErrBeenHarvested {
-		return nil, StrErrBeenHarvested
+		return nil, strErrBeenHarvested
 	} else if errZ != nil {
 		errMssg := fmt.Sprintf ("This store's messages could not be " +
 			"harvested. [%s]", errZ.Error ())
@@ -83,7 +83,7 @@ func (s *store) Harvest () (*list.List, error) {
 }
 
 var (
-	StrErrBeenHarvested error = errors.New ("This store has already been " +
+	strErrBeenHarvested error = errors.New ("This store has already been " +
 		"harvested.")
 )
 
