@@ -242,6 +242,23 @@ func (i *Interface) _harvest_ (replaceStore bool) (error) {
 	return nil
 }
 
+// MssgCheck () simply checks if there is any message that could be read. If there is,
+// true would be returned. Otherwise, false would be returned.
+func (i *Interface) MssgCheck () (bool) {
+	if i.deliveryStore == nil {
+		return false
+	}
+	if i.deliveryStore.checkNewMssg () == true {
+		return true
+	}
+	for _, stash := range i.stash {
+		if stash.checkNewMssg () == true {
+			return true
+		}
+	}
+	return false
+}
+
 /* This function destroys the interface. In other words, it prevents further sending
 	and receiving of messages, although reading of messages that are in the
 	harvest would not be prohibited. */

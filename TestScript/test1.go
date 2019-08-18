@@ -22,8 +22,9 @@ func sender (i *rnet.Interface, r string, n *rnet.Network) {
 	}
 }
 
-func reader (i *rnet.Interface) {
+func reader (i *rnet.Interface, id int) {
 	for {
+		fmt.Println ("Availability:", id, i.MssgCheck ())
 		mssg, errX := i.Read ()
 		if errX != nil {
 			fmt.Println ("Message could not be read:", errX.Error ())
@@ -48,8 +49,8 @@ func main () {
 		fmt.Println ("An interface could not be created:", err1, err2, err3)
 		return
 	}
-	go reader (intf2)
-	go reader (intf3)
+	go reader (intf2, 1)
+	go reader (intf3, 2)
 	sender (intf1, "recv", net)
 	sender (intf1, "anth", net)
 	for {
