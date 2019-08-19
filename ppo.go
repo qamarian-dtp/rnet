@@ -156,7 +156,7 @@ func (ppo *PPO) Send (mssg interface {}, recipient string) (error) {
 			error is returned. */
 
 			errMssg := fmt.Sprintf ("Unable to add message to the recipient's store. " +
-				[%s]", errT.Error ())
+				"[%s]", errT.Error ())
 			return errors.New (errMssg)
 		}
 		store.mssgAdded ()
