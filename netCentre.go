@@ -22,7 +22,7 @@ type NetCentre struct {
 //
 // Inputs
 //
-// input 0: A desired ID for the PPO. Value may be any string without trailing 
+// input 0: A desired ID for the PPO. Value may be any string, but not an empty string.
 //
 // Outpts
 //
@@ -53,7 +53,8 @@ func (nc *NetCentre) NewPPO (id string) (*PPO, error) {
 	return ppo, nil
 }
 
-// Disconnect () disconnects a PPO from the network. The input of this method should be the ID of the PPO that should be disconnected.
+// Disconnect () disconnects a PPO from the network. The input of this method should be the ID of
+// the PPO that should be disconnected.
 func (nc *NetCentre) Disconnect (id string) (error) {
 	// Trying to get the PPO, using the ID provided. { ...
 	somePPO, okX := nc.ppos.Load (id)
@@ -84,7 +85,8 @@ func (nc *NetCentre) Disconnect (id string) (error) {
 	Outpts
 	outpt 0: An MDI that could be used to message the PPO specified as input 0.
 
-	outpt 1: On success, value would be nil. On failure value would be an error. If the ID provided as input 0 is not in use, value would be NcErrIdNotInUse.
+	outpt 1: On success, value would be nil. On failure value would be an error. If the ID
+		provided as input 0 is not in use, value would be NcErrIdNotInUse.
 */
 func (n *NetCentre) provideMDI (id string) (*mdi, error) {
 	// Fetching the PPO whose ID was provided. { ...
@@ -102,7 +104,8 @@ func (n *NetCentre) provideMDI (id string) (*mdi, error) {
 	if errX == PpoErrNotConnected {
 		return nil, NcErrIdNotInUse
 	} else if errX != nil {
-		errMssg := fmt.Sprintf ("Unable to get message delivery info from recipient. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("Unable to get message delivery info from recipient. [%s]",
+			errX.Error ())
 		return nil, errors.New (errMssg)
 	}
 	// ... }

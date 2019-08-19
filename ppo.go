@@ -48,7 +48,8 @@ func newPPO (id string, netCentre *NetCentre) (*PPO, error) {
 type PPO struct {
 	id string             // The ID of the PPO.
 	netCentre *NetCentre  // The network centre of the PPO.
-	state int32           /* The state of the PPO. See the variable section for possible values of this data. */
+	state int32           /* The state of the PPO. See the variable section for possible values
+					of this data. */
 	store *store          // The place where new messages are added.
 	stash []*store        // Stores that could not be harvested successfully.
 	harvest *list.List    // Messages that have been harvested from store.
@@ -70,7 +71,7 @@ func (ppo *PPO) State () (int32) {
 }
 
 func (ppo *PPO) getStore () (*store) {
-	return ppo.store	
+	return ppo.store
 }
 
 // Send () helps send a message to another PPO on the network.
@@ -121,7 +122,8 @@ func (ppo *PPO) Send (mssg interface {}, recipient string) (error) {
 		if errG == NcErrIdNotInUse {
 			return PpoErrIdNotInUse
 		} else if errG != nil {
-			errMssg := fmt.Sprintf ("Network centre unable to provide an MDI for communicating with the recipient.")
+			errMssg := fmt.Sprintf ("Network centre unable to provide an MDI for " +
+				"communicating with the recipient.")
 			return errors.New (errMssg)
 		}
 		ppo.cache.Put (newMDI, recipient)
@@ -138,17 +140,23 @@ func (ppo *PPO) Send (mssg interface {}, recipient string) (error) {
 		addBeginning:
 		// Adding message to the rack of the sender, in the recipient's store. { ...
 		errT := mdi.getSenderRack ().addMssg (mssg)
-		if errT == rckErrBeenHarvested { /* If message could not be added because the rack has been harvested, a new rack is added to the new store. */
+		if errT == rckErrBeenHarvested { /* If message could not be added because the rack
+			has been harvested, a new rack is added to the new store. */
+
 			errU := mdi.newRack ()
 			if errU == mdiErrNotConnected {
 				return PpoErrRecipientNotHere
 			} else if errU != nil {
-				errMssg := fmt.Sprintf ("Unable to create new rack in recipient's new store. [%s]", errU.Error ())
+				errMssg := fmt.Sprintf ("Unable to create new rack in recipient's" +
+					" new store. [%s]", errU.Error ())
 				return errors.New (errMssg)
 			}
 			goto addBeginning
-		} else if errT != nil { // If message could not be added for some other reasons, error is returned.
-			errMssg := fmt.Sprintf ("Unable to add message to the recipient's store. [%s]", errT.Error ())
+		} else if errT != nil { /* If message could not be added for some other reasons,
+			error is returned. */
+
+			errMssg := fmt.Sprintf ("Unable to add message to the recipient's store. " +
+				[%s]", errT.Error ())
 			return errors.New (errMssg)
 		}
 		store.mssgAdded ()
@@ -157,11 +165,13 @@ func (ppo *PPO) Send (mssg interface {}, recipient string) (error) {
 	return nil
 }
 
-// Read () checks if there is any new message. If there is a new message, it returns the message. Otherwise, it returns nil.
+// Read () checks if there is any new message. If there is a new message, it returns the message.
+// Otherwise, it returns nil.
 //
 // Outpts
 //
-// outpt 0: If there is a new message, value would be a message. Messages are read on first-come first-served basis. If there are no new message, value would be nil.
+// outpt 0: If there is a new message, value would be a message. Messages are read on first-come
+// first-served basis. If there are no new message, value would be nil.
 //
 // outpt 1: Possible error values include: ppoErrNoStoreAvail.
 func (ppo *PPO) Read () (interface {}, error) {
@@ -175,7 +185,8 @@ func (ppo *PPO) Read () (interface {}, error) {
 			if errM == nil && ppo.harvest.Len () == 0 {
 				return nil, nil
 			} else if errM != nil {
-				errMssg := fmt.Sprintf ("Unable to harvest store and stash. [%s]", errM.Error ())
+				errMssg := fmt.Sprintf ("Unable to harvest store and stash. [%s]",
+					errM.Error ())
 				return nil, errors.New (errMssg)
 			}
 			goto readBeginning
@@ -187,10 +198,14 @@ func (ppo *PPO) Read () (interface {}, error) {
 	return mssg.Value, nil
 }
 
-/* This function is a shared-sub-function, and should not be called called by any function or method not belonging to this data type. This function harvests the delivery store (and stashes, if applicable), and place the harvested messages in the harvest (basket).
+/* This function is a shared-sub-function, and should not be called called by any function or method
+not belonging to this data type. This function harvests the delivery store (and stashes, if
+applicable), and place the harvested messages in the harvest (basket).
 
 	Inputs
-	input 0: This value specifies whether a new store should be given to the PPO or not, after the harvest. If value is true, a new store would replace the current one. If the value if false, no store would replace the current one.
+	input 0: This value specifies whether a new store should be given to the PPO or not, after
+		the harvest. If value is true, a new store would replace the current one. If the
+		value if false, no store would replace the current one.
 
 	Outpts
 	outpt 0: Possible error values include: ppoErrNoStoreAvail.
@@ -201,13 +216,15 @@ func (ppo *PPO) _harvest_ (replaceStore bool) (error) {
 	for _, stash := range ppo.stash {
 		stashMssgs, errY := stash.racksManager.Harvest ()
 		if errY != nil {
-			errMssg := fmt.Sprintf ("Messages of a stashed stores could not be harvested. [%s]", errY.Error ())
+			errMssg := fmt.Sprintf ("Messages of a stashed stores could not be " +
+				"harvested. [%s]", errY.Error ())
 			return errors.New (errMssg)
 		}
 		mssgsX.PushBackList (stashMssgs)
 	}
 	// ... }
-	// If PPO has no cuurent store, whatever have been harvested are placed in the harvest basket. { ,..
+	/* If PPO has no cuurent store, whatever have been harvested are placed in the harvest
+		basket. { ... */
 	if ppo.store == nil {
 		ppo.stash = []*store {}
 		ppo.harvest.PushBackList (mssgsX)
@@ -219,7 +236,8 @@ func (ppo *PPO) _harvest_ (replaceStore bool) (error) {
 	if replaceStore == true {
 		newStre, errX := newStore ()
 		if errX != nil {
-			errMssg := fmt.Sprintf ("A new store, to replace current store, could not be created. [%s]", errX.Error ())
+			errMssg := fmt.Sprintf ("A new store, to replace current store, could not" +
+				"be created. [%s]", errX.Error ())
 			return errors.New (errMssg)
 		}
 		ppo.store = newStre
@@ -231,7 +249,8 @@ func (ppo *PPO) _harvest_ (replaceStore bool) (error) {
 	mssgsY, errY := oldStore.Harvest ()
 	if errY != nil {
 		ppo.stash = append (ppo.stash, oldStore)
-		errMssg := fmt.Sprintf ("Messages of the current store could not be harvested. [%s]", errY.Error ())
+		errMssg := fmt.Sprintf ("Messages of the current store could not be harvested. [%s]",
+			errY.Error ())
 		return errors.New (errMssg)
 	}
 	// ... }
@@ -245,7 +264,8 @@ func (ppo *PPO) _harvest_ (replaceStore bool) (error) {
 	return nil
 }
 
-// Check () simply checks if there is any new message that could be read. If there is, true would be returned. Otherwise, false would be returned.
+// Check () simply checks if there is any new message that could be read. If there is, true would be
+// returned. Otherwise, false would be returned.
 func (ppo *PPO) Check () (bool) {
 	if len (ppo.stash) == 0 && ppo.store == nil {
 		return false
@@ -262,7 +282,8 @@ func (ppo *PPO) Check () (bool) {
 	return false
 }
 
-/* This function destroys the PPO. In other words, it prevents further sending and receiving of messages, although reading of messages that have already been received would be permitted. */
+/* This function destroys the PPO. In other words, it prevents further sending and receiving of
+messages, although reading of messages that have already been received would be permitted. */
 func (ppo *PPO) destroy () (error) {
 	// Harvesting the messages in the store. { ...
 	errX := ppo._harvest_ (false)
@@ -295,7 +316,8 @@ func (ppo *PPO) destroy () (error) {
 /* getMDI () provides an MDI that can be used to send messages to the PPO.
 
 	Outpts
-	outpt 0: On success, value would be an MDI that can be used to send messages to the PPO. On failure, value would be nil.
+	outpt 0: On success, value would be an MDI that can be used to send messages to the PPO. On
+		failure, value would be nil.
 
 	outpt 1: Possible errors include: PpoErrNotConnected.
 */

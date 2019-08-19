@@ -21,7 +21,9 @@ func newStore () (*store, error) {
 type store struct {
 	racks *cart.Cart               // The racks in the store.
 	racksManager *cart.AdminPanel  // A data you could to harvest the racks in a store.
-	newMssg bool                   /* Indicates if there is a new message in the store or not. True means there's a new message, while false means there's no message in the store. */
+	newMssg bool                   /* Indicates if there is a new message in the store or not.
+		True means there's a new message, while false means there's no message in the
+		store. */
 }
 
 // addRack () adds a rack to the store.
@@ -71,7 +73,8 @@ func (s *store) Harvest () (*list.List, error) {
 			}
 			rackMssgs, errD := rack.harvest ()
 			if errD != nil {
-				errMssg := fmt.Sprintf ("A rack could not be harvested. [%s]", errD.Error ())
+				errMssg := fmt.Sprintf ("A rack could not be harvested. [%s]",
+					errD.Error ())
 				return nil, errors.New (errMssg)
 			}
 			mssgs.PushBackList (rackMssgs)
@@ -84,7 +87,8 @@ func (s *store) Harvest () (*list.List, error) {
 	if errZ == cart.ErrBeenHarvested {
 		return nil, strErrBeenHarvested
 	} else if errZ != nil {
-		errMssg := fmt.Sprintf ("This store's messages could not be harvested. [%s]", errZ.Error ())
+		errMssg := fmt.Sprintf ("This store's messages could not be harvested. [%s]",
+			errZ.Error ())
 		return nil, errors.New (errMssg)
 	}
 	s.newMssg = false
