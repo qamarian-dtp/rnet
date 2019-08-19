@@ -242,9 +242,9 @@ func (i *Interface) _harvest_ (replaceStore bool) (error) {
 	return nil
 }
 
-// MssgCheck () simply checks if there is any message that could be read. If there is,
+// NewMssg () simply checks if there is any message that could be read. If there is,
 // true would be returned. Otherwise, false would be returned.
-func (i *Interface) MssgCheck () (bool) {
+func (i *Interface) NewMssg () (bool) {
 	if i.deliveryStore == nil {
 		return false
 	}
