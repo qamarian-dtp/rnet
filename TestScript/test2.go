@@ -7,10 +7,10 @@ import (
 	"time"
 )
 
-func sender (i *rnet.Interface, r string) {
+func sender (i *rnet.PPO, r string) {
 	for c := 1; c <= 10; c ++ {
 		fmt.Println ("Sending...")
-		errX := i.Send (i.NetAddr (), r)
+		errX := i.Send (i.ID (), r)
 		if errX != nil {
 			fmt.Println ("Message sending failed:", errX.Error ())
 		}
@@ -18,7 +18,7 @@ func sender (i *rnet.Interface, r string) {
 	}
 }
 
-func reader (i *rnet.Interface) {
+func reader (i *rnet.PPO) {
 	for {
 		mssg, errX := i.Read ()
 		if errX != nil {
@@ -37,9 +37,9 @@ func reader (i *rnet.Interface) {
 func main () {
 	fmt.Println ("Test has started.")
 	net := rnet.New ()
-	intf1, err1 := net.NewIntf ("net-addr-1")
-	intf2, err2 := net.NewIntf ("net-addr-2")
-	intf3, err3 := net.NewIntf ("net-addr-3")
+	intf1, err1 := net.NewPPO ("net-addr-1")
+	intf2, err2 := net.NewPPO ("net-addr-2")
+	intf3, err3 := net.NewPPO ("net-addr-3")
 	if err1 != nil || err2 != nil || err3 != nil {
 		fmt.Println ("An interface could not be created:", err1, err2, err3)
 		return
