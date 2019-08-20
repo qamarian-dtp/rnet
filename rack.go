@@ -16,7 +16,8 @@ func newRack () (*rack) {
 
 type rack struct {
 	mssgs *cart.Cart               // The messages in the rack.
-	mssgsManager *cart.AdminPanel  // A data you could use to harvest the messages in the rack.
+	mssgsManager *cart.AdminPanel  /* A data you could use to harvest the messages in
+		the rack. */
 }
 
 // addMssg () adds a message to a rack.
@@ -25,7 +26,8 @@ func (r *rack) addMssg (mssg interface {}) (error) {
 	if errX == cart.ErrBeenHarvested {
 		return rckErrBeenHarvested
 	} else if errX != nil {
-		errMssg := fmt.Sprintf ("Unable to add message to rack. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("Unable to add message to rack. [%s]",
+			errX.Error ())
 		return errors.New (errMssg)
 	}
 	return nil

@@ -1,4 +1,4 @@
-// rNet (Goroutine Network) is a set of data types/network that allows multiple
+// rNet (Goroutine Network) is a network (a set of data types) that allows multiple
 // goroutines to easily communicate with one another.
 //
 // By network, I do not mean something like the internet. No, it is not. See this

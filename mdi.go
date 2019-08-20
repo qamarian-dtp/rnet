@@ -19,8 +19,8 @@ func newMDI (recipientPPO *PPO) (*mdi, error) {
 		runtime.Gosched ()
 		goto addBeginning
 	} else if errX != nil {
-		errMssg := fmt.Sprintf ("The rack created for the MDI could not be added to the " +
-			"recipient's store. [%s]", errX.Error ())
+		errMssg := fmt.Sprintf ("The rack created for the MDI could not be " +
+			"added to the recipient's store. [%s]", errX.Error ())
 		return nil, errors.New (errMssg)
 	}
 	return &mdi {recipientPPO, rk}, nil
@@ -47,8 +47,8 @@ func (mdi *mdi) newRack () (error) {
 	}
 	errY := store.addRack (newSenderRack)
 	if errY != nil {
-		errMssg := fmt.Sprintf ("Unable to add the new rack to the recipient's store. [%s]",
-			errY.Error ())
+		errMssg := fmt.Sprintf ("Unable to add the new rack to the recipient's " +
+			"store. [%s]", errY.Error ())
 		return errors.New (errMssg)
 	}
 	mdi.senderRack = newSenderRack
