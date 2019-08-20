@@ -24,10 +24,13 @@
 // Afterwards, these routines could communicate with one another, over the network,
 // using methods Send () and Read ().
 //
-//	err1 := xPPO.Send ("hello", "y") // Goroutine X sending "hello world!" to Y.
+//	go func () {
+//		err1 := xPPO.Send ("hello", "y") // X sending "hello world!" to Y.
+//	} ()
 //
-//	mssg, err2 := yPPO.Read () /* Goroutine Y checking for any message that might
-//		have been sent to it. */
+//	go func () {
+//		mssg, err2 := yPPO.Read () // Y checking for new messages.
+//	} ()
 //
 // Warning!
 //
