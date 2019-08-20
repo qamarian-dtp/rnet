@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"runtime"
+	"sync"
 	"sync/atomic"
 )
 
@@ -35,6 +36,12 @@ func newPPO (id string, netCentre *NetCentre) (*PPO, error) {
 		harvest:    list.New (),
 		cache:      newMDICache (),
 	}
+	locker := &sync.Mutex {}
+	ppo.wakeup = struct {
+		wakeupChan       *sync.Cond
+		wakeupChanLocker *sync.Mutex
+		waiting          bool
+	} {sync.NewCond (locker), locker, false}
 	dStore, errY := newStore ()
 	if errY != nil {
 		errMssg := fmt.Sprintf ("Unable to create new store. [%s]", errY.Error ())
@@ -49,11 +56,16 @@ type PPO struct {
 	id string             // The ID of the PPO.
 	netCentre *NetCentre  // The network centre of the PPO.
 	state int32           /* The state of the PPO. See the variable section for possible values
-					of this data. */
+		of this data. */
 	store *store          // The place where new messages are added.
 	stash []*store        // Stores that could not be harvested successfully.
 	harvest *list.List    // Messages that have been harvested from store.
 	cache *mdiCache       // The MDI cache of the PPO.
+	wakeup struct {
+		wakeupChan       *sync.Cond
+		wakeupChanLocker *sync.Mutex
+		waiting          bool
+	}
 }
 
 // ID () provides the ID assigned to the PPO.
@@ -160,6 +172,9 @@ func (ppo *PPO) Send (mssg interface {}, recipient string) (error) {
 			return errors.New (errMssg)
 		}
 		store.mssgAdded ()
+		for mdi.getRecipientPPO ().waiting () == true && mdi.getRecipientPPO ().Check () == true {
+			mdi.getRecipientPPO ().signalNewMssg ()
+		}
 		// ... }
 	// ... }
 	return nil
@@ -282,6 +297,31 @@ func (ppo *PPO) Check () (bool) {
 	return false
 }
 
+func (ppo *PPO) Wait () {
+	if ppo.state == PpoStateDestroyed {
+		return
+	}
+	ppo.wakeup.waiting = true
+	defer func () {
+		ppo.wakeup.waiting = false
+	} ()
+	if ppo.Check () == true {
+		return
+	}
+	ppo.wakeup.wakeupChanLocker.Lock ()
+	defer ppo.wakeup.wakeupChanLocker.Unlock ()
+	ppo.wakeup.wakeupChan.Wait ()
+}
+
+func (ppo *PPO) waiting () (bool) {
+	return ppo.wakeup.waiting
+}
+
+func (ppo *PPO) signalNewMssg () {
+	ppo.wakeup.wakeupChan.Signal ()
+}
+
+
 /* This function destroys the PPO. In other words, it prevents further sending and receiving of
 messages, although reading of messages that have already been received would be permitted. */
 func (ppo *PPO) destroy () (error) {
@@ -310,6 +350,9 @@ func (ppo *PPO) destroy () (error) {
 		}
 	}
 	// ... }
+	for ppo.wakeup.waiting == true {
+		ppo.wakeup.wakeupChan.Signal ()
+	}
 	return nil
 }
 
