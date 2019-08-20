@@ -97,7 +97,8 @@ func (ppo *PPO) getStore () (*store) {
 //
 // Outpts
 //
-// outpt 0: Possible error values include: PpoErrNotConnected, and PpoErrIdNotInUse.
+// outpt 0: Possible error values include: PpoErrNotConnected, PpoErrIdNotInUse, and
+// PpoErrRecipientNotHere.
 func (ppo *PPO) Send (mssg interface {}, recipient string) (error) {
 	// Validating input data. { ...
 	if mssg == nil {
@@ -192,7 +193,8 @@ func (ppo *PPO) Send (mssg interface {}, recipient string) (error) {
 // outpt 0: If there is a new message, value would be a message. Messages are read on
 // first-come first-served basis. If there are no new message, value would be nil.
 //
-// outpt 1: Possible error values include: ppoErrNoStoreAvail.
+// outpt 1: On success, value would be nil. On failure, value would the error that
+// occured.
 func (ppo *PPO) Read () (interface {}, error) {
 	readBeginning:
 	mssg := ppo.harvest.Front ()

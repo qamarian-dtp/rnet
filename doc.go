@@ -7,31 +7,27 @@
 // Assuming you want goroutines X, Y, and Z to communicate with one another, you could
 // create a communication network (an rNet) for them.
 //
-// After creating the network, then create a network interface for each one of the
-// goroutines.
+// After creating the network, then create a personal post office (PPO) for each one
+// of the goroutines.
 //
-// A network interface is simply a data which can be used to send and receive messages
-// from other goroutines on the same network.
+// A PPO is simply a data which can be used to send and receive messages from other
+// goroutines on the same network.
 //
-//	net := rnet.New () // Creation of a new communication network
+//	net := rnet.New () // Creation of a new rNet (communication network)
 //
-//	netInterfaceForX, err1 := net.NewIntf ("x") /* Creation of a network
-//		interface for goroutine X. */
+//	xPPO, err1 := net.NewPPO ("x") // Creation of a PPO for goroutine X.
 //
-//	netInterfaceForY, err2 := net.NewIntf ("y") /* Creation of a network
-//		interface for goroutine Y. */
+//	yPPO, err2 := net.NewPPO ("y") // Creation of a PPO for goroutine Y.
 //
-//	netInterfaceForZ, err3 := net.NewIntf ("z") /* Creation of a network
-//		interface for goroutine Z. */
+//	zPPO, err3 := net.NewPPO ("z") // Creation of a PPO for goroutine Z.
 //
 // Afterwards, these routines could communicate with one another, over the network,
 // using methods Send () and Read ().
 //
-//	err1 := netInterfaceForX.Send ("hello", "y") /* Goroutine X sending "hello"
-//		to goroutine Y. */
+//	err1 := xPPO.Send ("hello", "y") // Goroutine X sending "hello world!" to Y.
 //
-//	mssg, err2 := netInterfaceForY.Read () /* Goroutine Y checking for any
-//		message that might have been sent to it. */
+//	mssg, err2 := yPPO.Read () /* Goroutine Y checking for any message that might
+//		have been sent to it. */
 //
 // Warning!
 //
