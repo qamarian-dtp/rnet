@@ -68,7 +68,7 @@ type PPO struct {
 	}
 }
 
-// ID () provides the ID assigned to the PPO.
+// ID () outputs the ID of the PPO.
 func (ppo *PPO) ID () (string) {
 	return ppo.id
 }
@@ -191,7 +191,7 @@ func (ppo *PPO) Send (mssg interface {}, recipient string) (error) {
 // Outpts
 //
 // outpt 0: If there is a new message, value would be a message. Messages are read on
-// first-come first-served basis. If there are no new message, value would be nil.
+// first-in first-out basis (FIFO). If there are no new message, value would be nil.
 //
 // outpt 1: On success, value would be nil. On failure, value would the error that
 // occured.
@@ -302,9 +302,9 @@ func (ppo *PPO) Check () (bool) {
 	return false
 }
 
-// Wait () suspends the goroutine that calls it, until a message is available in the store
-// or the PPO is disconnected from the network. In other words, it prevents unnecessary
-// wastage of CPU cycles. Rather than using a for loop and Check () to wait for a new
+// Wait () suspends the goroutine that calls it, until a new message has been received or
+// the PPO is disconnected from the network. In other words, it prevents unnecessary
+// wastage of CPU cycles. Rather than using a for loop and Check () to wait for new
 // message, this method should be used.
 func (ppo *PPO) Wait () {
 	if ppo.state == PpoStateDestroyed {
